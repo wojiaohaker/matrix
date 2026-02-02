@@ -22,9 +22,8 @@ MATRiX is an advanced simulation platform that integrates **MuJoCo**, **Unreal E
 **Join our WeChat group for MATRiX simulation discussions:**
 
 <div align="center">
-  <img src="demo_gif/Wechat.png" alt="WeChat Group QR Code" style="height: 280px; width: auto; margin: 0 12px;"/>
-  <img src="demo_gif/robo.jpg" alt="WeChat Assistant QR Code" style="height: 280px; width: auto; margin: 0 12px;"/>
-  <p><em>Scan to join MATRiX simulation community; if the group QR code expires, add the assistant</em></p>
+  <img src="/home/robdog/matrix/demo_gif/wechat.png" alt="WeChat Group QR Code" style="height: 280px; width: auto; margin: 0 12px;"/>
+  <p><em>Scan to join MATRiX simulation community</em></p>
 </div>
 
 ---
