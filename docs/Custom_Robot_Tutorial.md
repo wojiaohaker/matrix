@@ -8,9 +8,9 @@ MATRiX currently provides a built-in `custom` robot type to support user-defined
 
 The full workflow can be summarized as follows:
 
-1. Replace the default `custom.xml` with your own MuJoCo robot model.
+1. Prepare your custom URDF/XML and mesh assets.
 2. Update the IMU and other sensor definitions according to your robot structure.
-3. Keep the two copies of `custom.xml` identical.
+3. Let the custom import wrapper generate and synchronize the UE-side and MuJoCo-side runtime XML.
 4. Select the `custom` robot in `sim_launcher` and enable MuJoCo mode.
 5. Use your own MuJoCo API controller to drive the robot.
 
@@ -22,26 +22,26 @@ In simple terms:
 
 ## 2. Key File Locations
 
-The custom quadruped workflow mainly involves the following files:
+The custom quadruped workflow mainly involves the following runtime files. These paths are created by the custom URDF import flow when the launcher delegates to `scripts/run_custom_urdf.sh`; they are not shipped as prebuilt `custom` model content in the base package.
 
 - Custom robot model on the UE side:
-  - `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/custom.xml`
+  - `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/current.xml`
 - Custom robot model on the MuJoCo side:
-  - `src/robot_mujoco/robots/custom/custom.xml`
+  - `src/robot_mujoco/zsibot_robots/custom/current.xml`
 - Custom robot scene entry file:
-  - `src/robot_mujoco/robots/custom/scene_terrain_custom.xml`
+  - `src/robot_mujoco/zsibot_robots/custom/scene_terrain_custom.xml`
 - Runtime robot configuration file:
   - `config/config.json`
 
 Please pay special attention to the following points:
 
-- `scene_terrain_custom.xml` directly `include`s `custom.xml`.
-- The `custom` directory already contains an `assets/` folder.
-- Your robot mesh file paths must match the filenames referenced in `custom.xml`.
+- `scene_terrain_custom.xml` directly includes the active custom XML.
+- The import flow creates and synchronizes the `assets/` folder.
+- Your robot mesh file paths must match the filenames referenced in the imported XML.
 
 ## 3. Default Model Description
 
-The `custom.xml` currently included in the repository is a runnable MuJoCo model template, and it corresponds to the `zsl-1` robot dog by default.
+The released base package does not include a prebuilt `custom` robot directory. A custom robot is generated at runtime from your URDF/XML input and cached under `src/robot_mujoco/zsibot_robots/custom/_cache/` and `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/_cache/`.
 
 This template already includes:
 
@@ -50,15 +50,18 @@ This template already includes:
 - IMU-related sites and sensors
 - Additional sensor pose definitions such as `livox_imu` and `camera_imu`
 
-If your robot is not `zsl-1`, you can use this file as a reference template and replace the robot body description with your own model.
+For controller-compatible URDFs, the import flow may reuse one of the published reference layouts: `xgb`, `xgw`, `zgws`, `go2`, or `go2w`. The `xxg` reference profile is intentionally not part of the v0.2.2 public release package.
 
-## 4. Step 1: Replace `custom.xml`
+## 4. Step 1: Import Your Custom Model
 
-First, edit:
+First, prepare your URDF/XML and mesh assets. When launching from `sim_launcher`, select the `custom` robot and provide the custom model file so `scripts/run_custom_urdf.sh` can import it.
 
-- `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/custom.xml`
+If you are debugging manually, the active generated files are:
 
-Replace the default robot model in that file with your own MuJoCo-format robot model.
+- `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/current.xml`
+- `src/robot_mujoco/zsibot_robots/custom/current.xml`
+
+Do not rely on a pre-existing `Content/model/custom` directory after a clean install; it is runtime-generated.
 
 In most cases, your model should include at least the following parts:
 
@@ -75,18 +78,18 @@ When replacing the model, check the following carefully:
 - Whether the robot base body can be loaded correctly as the root rigid body
 - Whether the model can be parsed by MuJoCo without XML errors
 
-If your robot uses new mesh files, place the corresponding files in both of the following directories:
+If your robot uses new mesh files, place them next to your input URDF under an `assets/` or `meshes/` directory. The import wrapper copies them into:
 
 - `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/assets/`
-- `src/robot_mujoco/robots/custom/assets/`
+- `src/robot_mujoco/zsibot_robots/custom/assets/`
 
-Also make sure the filenames match the references in `custom.xml` exactly.
+Also make sure the filenames match the mesh references exactly.
 
 ## 5. Step 2: Update the IMU and Other Sensors
 
-After replacing the robot body, you also need to update the sensor-related parts in `custom.xml`.
+After preparing the robot body, you also need to update the sensor-related parts in your source model.
 
-This is very important because the sensor poses in the default template are configured for the original `zsl-1` robot structure, for example:
+This is very important because sensor poses are robot-structure-specific, for example:
 
 - `imu`
 - `livox_imu`
@@ -111,26 +114,21 @@ For example, if you rename a site in `<worldbody>`, then the corresponding entri
 - `framepos`
 - `framelinvel`
 
-## 6. Step 3: Synchronize the Two Copies of `custom.xml`
+## 6. Step 3: Synchronize the Runtime Copies
 
-After you finish editing the UE-side `custom.xml`, copy the same model to:
+The import wrapper synchronizes the UE-side and MuJoCo-side copies automatically:
 
-- `src/robot_mujoco/robots/custom/custom.xml`
+- UE side: `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/current.xml`
+- MuJoCo side: `src/robot_mujoco/zsibot_robots/custom/current.xml`
 
-These two files should always stay identical.
+These two files should stay equivalent for the active custom robot.
 
 The reason is:
 
 - The UE-side path is used for simulator content resource loading.
-- The MuJoCo-side path is used when loading the MuJoCo scene under `src/robot_mujoco/robots/custom/`.
+- The MuJoCo-side path is used when loading the MuJoCo scene under `src/robot_mujoco/zsibot_robots/custom/`.
 
-In practice, it is recommended to repeat the same synchronization step every time you modify the robot model:
-
-- Copy `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/custom.xml`
-  to
-- `src/robot_mujoco/robots/custom/custom.xml`
-
-If you changed mesh resources, also synchronize the related `assets/` files.
+If you change the source URDF or mesh resources, re-import the custom robot from the launcher. For a forced refresh, set `SIM_LAUNCHER_FORCE_REIMPORT_CUSTOM_URDF=1`.
 
 ## 7. Step 4: Select the `custom` Robot
 
@@ -184,13 +182,13 @@ Otherwise, your custom MuJoCo robot model will not enter the intended dynamics-c
 
 The MuJoCo scene entry used by the custom robot dog is:
 
-- `src/robot_mujoco/robots/custom/scene_terrain_custom.xml`
+- `src/robot_mujoco/zsibot_robots/custom/scene_terrain_custom.xml`
 
 This scene file directly includes:
 
-- `custom.xml`
+- the active custom XML generated by the import wrapper
 
-In other words, the robot body ultimately loaded by MuJoCo is exactly the modified `custom.xml`.
+In other words, the robot body ultimately loaded by MuJoCo is the active generated custom XML.
 
 At the same time, `run_sim.sh` writes the following file:
 
@@ -201,7 +199,7 @@ The key fields will become:
 - `robot: "custom"`
 - `robot_scene: "scene_terrain_custom.xml"`
 
-This is why `custom.xml` is the core file in the entire custom quadruped workflow.
+This is why the generated active custom XML is the core file in the entire custom quadruped workflow.
 
 ## 10. Step 7: Integrate Your Own MuJoCo API Controller
 
@@ -242,9 +240,9 @@ This is the core value of the custom robot workflow.
 To reduce problems, it is recommended to follow the steps below:
 
 1. Prepare your own MuJoCo robot XML and mesh assets.
-2. Modify `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/custom/custom.xml`.
+2. Import it through `sim_launcher` with robot type `custom`.
 3. Update the IMU, camera, and other sensor definitions.
-4. Synchronize the same `custom.xml` and related `assets/` into `src/robot_mujoco/robots/custom/`.
+4. Let the import wrapper synchronize generated XML and `assets/` into both runtime locations.
 5. Select the `custom` robot in the launcher.
 6. Enable MuJoCo mode.
 7. Start the simulation.
@@ -257,7 +255,7 @@ To reduce problems, it is recommended to follow the steps below:
 
 Possible reasons:
 
-- `custom.xml` contains XML syntax errors
+- The source URDF/XML contains syntax errors
 - Referenced mesh files are missing from `assets/`
 - Mesh filenames do not match the references in the XML
 - Body or joint naming is inconsistent
@@ -266,7 +264,7 @@ Possible reasons:
 
 Possible reasons:
 
-- The `site` positions still use the default template parameters
+- The `site` positions still use parameters from another robot layout
 - The `<sensor>` section still references old site names
 - The camera pose was not updated for the new robot structure
 
@@ -274,8 +272,8 @@ Possible reasons:
 
 Possible reasons:
 
-- Only one copy of `custom.xml` was modified
-- Resource files were synchronized to only one side
+- The runtime XML was edited manually on only one side
+- Resource files were imported to only one side
 - MuJoCo mode was not enabled in the launcher
 
 ### Issue 4: The Robot Does Not Move as Expected
@@ -291,7 +289,7 @@ Possible reasons:
 Before starting the simulation, confirm the following:
 
 - Your robot model is valid MuJoCo XML
-- The two copies of `custom.xml` are identical
+- The generated UE-side and MuJoCo-side runtime XML are equivalent
 - Both `assets/` directories contain all referenced mesh files
 - The IMU and other sensor definitions match the robot structure
 - `robot_type` is set to `custom`
@@ -302,9 +300,9 @@ Before starting the simulation, confirm the following:
 
 Integrating a custom robot dog into MATRiX is not complicated. The key steps are:
 
-- Replace the default `zsl-1` in `custom.xml` with your own robot model
+- Prepare your custom URDF/XML and mesh assets
 - Update the IMU and other sensors according to their real mounting positions
-- Keep the two copies of `custom.xml` and related assets synchronized
+- Let the import wrapper keep runtime XML and related assets synchronized
 - Select `custom` and enable MuJoCo mode in `sim_launcher`
 - Drive the robot using your own MuJoCo API controller
 

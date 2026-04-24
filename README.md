@@ -125,18 +125,20 @@ matrix/
 
    MATRiX uses a modular chunk package system that allows you to download only what you need:
 
-   - **Assets Package** (Required): Runtime binaries, shared libraries, ONNX models, 3D models, and other essential files
-   - **Base Package** (Required): Core files and EmptyWorld map
+   - **Assets Package** (Required): Runtime binaries, shared libraries, ONNX models, dynamic map data, and launcher files
+   - **Base Package** (Required): Core files, EmptyWorld map, and the published robot model set
    - **Shared Resources** (Recommended): Shared resources used by multiple maps
    - **Map Packages** (Optional): Individual maps that can be downloaded on demand
 
    **Quick Installation:**
 
    ```bash
-   bash scripts/release_manager/install_chunks.sh 0.1.1
+   bash scripts/release_manager/install_chunks.sh 0.2.2
    ```
 
    > 📖 **For Details:** For complete information about the chunk package system, including package sizes, map list, installation verification, and FAQs, see the [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md).
+
+   > **Published robot models in v0.2.2:** `xgb`, `xgw`, `zgws`, `go2`, and `go2w`. `xxg` and other internal model directories are not included in this release.
 
    **Alternative: Manual Installation (via Cloud Storage)**
 
@@ -148,7 +150,7 @@ matrix/
    2. **Extract** all `.tar.gz` and `.json` files into the `matrix/releases/` directory.
    3. **Install** using the local script:
       ```bash
-      bash scripts/release_manager/install_chunks_local.sh 0.1.1
+      bash scripts/release_manager/install_chunks_local.sh 0.2.2
       ```
 
       > ⚠️ **Important:** Ensure all files (base, assets, shared, etc.) are placed directly in `matrix/releases/` before running the installation script.
@@ -260,12 +262,12 @@ MATRiX provides various scripts to help you build, install, and run the simulato
 
 ```bash
 # 1. On a machine with internet, download packages
-bash scripts/release_manager/install_chunks.sh 0.1.1
+bash scripts/release_manager/install_chunks.sh 0.2.2
 
 # 2. Copy the releases/ directory to offline machine
 
 # 3. On offline machine, install from local files
-bash scripts/release_manager/install_chunks_local.sh 0.1.1
+bash scripts/release_manager/install_chunks_local.sh 0.2.2
 # → Installs assets package (required) and all other packages from releases/ directory
 ```
 
@@ -273,11 +275,11 @@ bash scripts/release_manager/install_chunks_local.sh 0.1.1
 
 ```bash
 # Option 1: Download and install new maps
-bash scripts/release_manager/install_chunks.sh 0.1.1
+bash scripts/release_manager/install_chunks.sh 0.2.2
 # → Select additional maps to download
 
 # Option 2: If files already in releases/, just install
-bash scripts/release_manager/install_chunks_local.sh 0.1.1
+bash scripts/release_manager/install_chunks_local.sh 0.2.2
 # → Installs assets package (if needed) and all available maps from releases/
 ```
 
@@ -285,7 +287,7 @@ bash scripts/release_manager/install_chunks_local.sh 0.1.1
 
 ```bash
 # Quick reinstall from local releases/ directory
-bash scripts/release_manager/install_chunks_local.sh 0.1.1
+bash scripts/release_manager/install_chunks_local.sh 0.2.2
 # → No download needed, fast installation
 ```
 
@@ -308,9 +310,9 @@ bash scripts/release_manager/install_chunks_local.sh 0.1.1
 ```text
 matrix/
 ├── releases/                    # Downloaded packages (created after install_chunks.sh)
-│   ├── assets-0.1.1.tar.gz     # Assets package (required)
-│   ├── base-0.1.1.tar.gz       # Base package (required)
-│   ├── shared-0.1.1.tar.gz     # Shared resources (recommended)
+│   ├── assets-0.2.2.tar.gz     # Assets package (required)
+│   ├── base-0.2.2.tar.gz       # Base package (required)
+│   ├── shared-0.2.2.tar.gz     # Shared resources (recommended)
 │   └── *.tar.gz                # Map packages (optional)
 │
 └── src/UeSim/Linux/zsibot_mujoco_ue/  # Runtime directory (where packages are installed)
@@ -322,6 +324,8 @@ matrix/
 - `src/UeSim/Linux/zsibot_mujoco_ue/Content/Paks/` = Runtime location (installed files)
 - `install_chunks.sh` downloads to `matrix/releases/` AND installs to runtime directory
 - `install_chunks_local.sh` only installs from `matrix/releases/` to runtime directory
+- Published robot model directories are installed under `src/UeSim/Linux/zsibot_mujoco_ue/Content/model/` and mirrored to `src/robot_mujoco/zsibot_robots/`.
+- `Content/model/dynamicmap` is created at runtime for MoonWorld from `dynamicmaps/moonworld.bin`.
 
 > **Tip:** Keep files in `matrix/releases/` directory for future use. You can delete them to save space, but you'll need to re-download if you want to reinstall.
 

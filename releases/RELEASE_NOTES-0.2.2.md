@@ -1,0 +1,46 @@
+# MATRiX Release 0.2.2
+
+## Required Packages
+
+- **assets-0.2.2.tar.gz** (~1020MB)
+  - Launcher files: `bin/sim_launcher`, `bin/sim_launcher.bin`
+  - MuJoCo runtime binary and dynamic map payloads
+  - MC runtime binaries and shared libraries, including WBC libraries
+  - ONNX controller models: `xg`, `xg_wheel`, `zg_wheels`
+  - UE runtime dependencies, including OpenCV shared libraries
+
+- **base-0.2.2.tar.gz** (~2.0GB)
+  - Chunk 0 / EmptyWorld core content
+  - Core Blueprints and system files
+  - Published robot model directories: `xgb`, `xgw`, `zgws`, `go2`, `go2w`
+  - Runtime template directories: `Content/model/config`, `Content/model/SceneLoder`
+
+`xxg` and other internal robot model directories are not included in this release. `Content/model/dynamicmap` is created at runtime for MoonWorld from `dynamicmaps/moonworld.bin`.
+
+## Recommended / Optional Packages
+
+- **shared-0.2.2.tar.gz** (~3.3GB): shared resources used by multiple maps. This file exceeds GitHub's single-asset size limit and is uploaded as split parts when needed.
+- **Map packages**: install only the maps you need.
+
+## Checksums
+
+- `assets-0.2.2.tar.gz`: `4bf96c9a6077aeb78210ed04461dbe186b700b3f2149b0eec49e3713240f1b5c`
+- `base-0.2.2.tar.gz`: `2cbb40861e89c40735cd64b24e8b64d88d012f335bdb405b5ed52db86f8b4e38`
+
+Verify all downloaded packages with:
+
+```bash
+sha256sum -c checksums-0.2.2.sha256
+```
+
+## Install
+
+```bash
+bash scripts/release_manager/install_chunks.sh 0.2.2
+```
+
+For offline/local installation, place downloaded packages in `releases/` and run:
+
+```bash
+bash scripts/release_manager/install_chunks_local.sh 0.2.2
+```
