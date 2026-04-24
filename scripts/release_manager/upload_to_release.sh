@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 cd "$PROJECT_ROOT"
 
-VERSION="${1:-0.1.1}"
+VERSION="${1:-0.2.2}"
 REPO="zsibot/matrix"
 RELEASE_DIR="releases"
 MAX_SIZE=2147483648  # 2GB in bytes (GitHub Releases limit)

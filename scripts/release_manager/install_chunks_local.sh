@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 加载公共函数库
 source "${SCRIPT_DIR}/common.sh"
 
-VERSION="${1:-0.1.1}"
+VERSION="${1:-0.2.2}"
 RELEASE_DIR="${PROJECT_ROOT}/releases"
 TARGET_DIR="${PROJECT_ROOT}/src/UeSim/Linux/zsibot_mujoco_ue"
 PAK_DIR="${TARGET_DIR}/Content/Paks"
@@ -43,12 +43,21 @@ log_section "[1] 安装资源文件包 (必需)"
                 log "✓ 资源文件包安装完成"
 
                 # 验证关键文件是否存在
-                if [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
-                    launcher_size=$(stat -f%z "${PROJECT_ROOT}/bin/sim_launcher" 2>/dev/null || stat -c%s "${PROJECT_ROOT}/bin/sim_launcher" 2>/dev/null || echo 0)
+                if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ] || [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
+                    launcher_file="${PROJECT_ROOT}/bin/sim_launcher.bin"
+                    if [ ! -f "$launcher_file" ]; then launcher_file="${PROJECT_ROOT}/bin/sim_launcher"; fi
+
+                    launcher_size=$(stat -f%z "$launcher_file" 2>/dev/null || stat -c%s "$launcher_file" 2>/dev/null || echo 0)
                     if [ "$launcher_size" -gt 1000000 ]; then
-                        log "✓ 资源文件验证通过: sim_launcher (${launcher_size} 字节)"
+                        log "✓ 资源文件验证通过: $(basename "$launcher_file") (${launcher_size} 字节)"
                     else
-                        log "⚠️  资源文件可能未正确安装: sim_launcher 文件过小 (${launcher_size} 字节)"
+                        # 如果 sim_launcher 是脚本，检查它是否调用了 .bin
+                        if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
+                            bin_size=$(stat -f%z "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || stat -c%s "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || echo 0)
+                            log "✓ 资源文件验证通过: sim_launcher.bin (${bin_size} 字节)"
+                        else
+                            log "⚠️  资源文件可能未正确安装: 关键文件过小"
+                        fi
                     fi
                 else
                     log "⚠️  关键文件缺失: bin/sim_launcher 未找到"
@@ -189,12 +198,21 @@ log_section "[5] 验证安装"
     verify_installation "$PAK_DIR"
 
     # 验证资源文件是否已安装
-    if [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
-        launcher_size=$(stat -f%z "${PROJECT_ROOT}/bin/sim_launcher" 2>/dev/null || stat -c%s "${PROJECT_ROOT}/bin/sim_launcher" 2>/dev/null || echo 0)
+    if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ] || [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
+        launcher_file="${PROJECT_ROOT}/bin/sim_launcher.bin"
+        if [ ! -f "$launcher_file" ]; then launcher_file="${PROJECT_ROOT}/bin/sim_launcher"; fi
+
+        launcher_size=$(stat -f%z "$launcher_file" 2>/dev/null || stat -c%s "$launcher_file" 2>/dev/null || echo 0)
         if [ "$launcher_size" -gt 1000000 ]; then
-            log "✓ 资源文件验证通过: sim_launcher (${launcher_size} 字节)"
+            log "✓ 资源文件验证通过: $(basename "$launcher_file") (${launcher_size} 字节)"
         else
-            log "⚠️  资源文件可能未正确安装: sim_launcher 文件过小 (${launcher_size} 字节)"
+            # 如果 sim_launcher 是脚本，检查它是否调用了 .bin
+            if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
+                bin_size=$(stat -f%z "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || stat -c%s "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || echo 0)
+                log "✓ 资源文件验证通过: sim_launcher.bin (${bin_size} 字节)"
+            else
+                log "⚠️  资源文件可能未正确安装: 关键文件过小"
+            fi
         fi
     fi
 }
@@ -269,4 +287,3 @@ log_section "[6] 完成"
     echo "  1. 将地图包文件放到 releases/ 目录"
     echo "  2. 重新运行此脚本: bash scripts/release_manager/install_chunks_local.sh ${VERSION}"
 }
-

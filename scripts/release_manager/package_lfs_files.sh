@@ -49,19 +49,25 @@ if [ -d "${PROJECT_ROOT}/bin" ]; then
         total_size=$((total_size + size))
         log "  ✓ bin/sim_launcher ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
     fi
+    if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
+        cp "${PROJECT_ROOT}/bin/sim_launcher.bin" "${TEMP_DIR}/bin/"
+        file_count=$((file_count + 1))
+        size=$(stat -c%s "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || stat -f%z "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || echo 0)
+        total_size=$((total_size + size))
+        log "  ✓ bin/sim_launcher.bin ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
+    fi
 fi
 
-# 2. src/robot_mc/build/export/onnx_model_crypto/ - ONNX 模型（排除 zg 和 zg_wheel）
+# 2. src/robot_mc/build/export/onnx_model_crypto/ - ONNX 模型（只发布 run_sim.sh 1-5 需要的控制模型）
 if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto" ]; then
-    log "收集 ONNX 模型文件（排除 zg 和 zg_wheel）..."
+    log "收集 ONNX 模型文件（仅 xg、xg_wheel、zg_wheels）..."
     mkdir -p "${TEMP_DIR}/src/robot_mc/build/export/onnx_model_crypto"
     
-    # 遍历所有目录，排除 zg 和 zg_wheel
+    # 遍历所有目录，只收集本次发布需要的控制模型
     for model_dir in "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto"/*; do
         if [ -d "$model_dir" ]; then
             model_name=$(basename "$model_dir")
-            # 排除 zg 和 zg_wheel
-            if [ "$model_name" != "zg" ] && [ "$model_name" != "zg_wheel" ]; then
+            if [ "$model_name" = "xg" ] || [ "$model_name" = "xg_wheel" ] || [ "$model_name" = "zg_wheels" ]; then
                 log "  收集模型: $model_name"
                 cp -r "$model_dir" "${TEMP_DIR}/src/robot_mc/build/export/onnx_model_crypto/"
                 # 统计文件数
@@ -71,10 +77,23 @@ if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto" ]; then
                 total_size=$((total_size + size))
                 log "    ✓ $model_name: ${count} 个文件 ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
             else
-                log "  跳过模型: $model_name (已排除)"
+                log "  跳过模型: $model_name (未发布)"
             fi
         fi
     done
+fi
+
+# 2b. src/robot_mc/build/export/mc/bin/ - MC 运行时文件
+if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" ]; then
+    log "收集 MC 运行时文件..."
+    mkdir -p "${TEMP_DIR}/src/robot_mc/build/export/mc/bin"
+    cp -a "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin/." "${TEMP_DIR}/src/robot_mc/build/export/mc/bin/"
+
+    count=$(find "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" -maxdepth 1 -type f | wc -l)
+    size=$(du -sb "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" 2>/dev/null | cut -f1 || echo 0)
+    file_count=$((file_count + count))
+    total_size=$((total_size + size))
+    log "  ✓ mc/bin: ${count} 个文件 ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
 fi
 
 # 3. src/UeSim/Linux/Engine/ - UE 引擎共享库（OpenCV, ONNX Runtime 等）
@@ -89,15 +108,22 @@ if [ -d "${PROJECT_ROOT}/src/UeSim/Linux/Engine" ]; then
         cp -r "${PROJECT_ROOT}/src/UeSim/Linux/Engine/Binaries"/* "${TEMP_DIR}/src/UeSim/Linux/Engine/Binaries/" 2>/dev/null || true
     fi
     
-    # 复制 Plugins 目录（只复制 Binaries 子目录下的共享库）
+    # 复制 Plugins 目录（复制 Binaries 子目录和 .uplugin 描述文件）
     if [ -d "${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins" ]; then
         mkdir -p "${TEMP_DIR}/src/UeSim/Linux/Engine/Plugins"
-        # 只复制 Plugins 下的 Binaries 目录
-        find "${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins" -type d -name "Binaries" | while read bin_dir; do
+        # 复制 Plugins 下的 Binaries 目录
+        find "${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins" -type d -name "Binaries" | while IFS= read -r bin_dir; do
             rel_path="${bin_dir#${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins/}"
             target_dir="${TEMP_DIR}/src/UeSim/Linux/Engine/Plugins/${rel_path}"
             mkdir -p "$(dirname "$target_dir")"
             cp -r "$bin_dir" "$target_dir" 2>/dev/null || true
+        done
+        # 复制插件描述文件，避免下次重打包时丢失 .uplugin
+        find "${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins" -type f -name "*.uplugin" | while IFS= read -r plugin_file; do
+            rel_path="${plugin_file#${PROJECT_ROOT}/src/UeSim/Linux/Engine/Plugins/}"
+            target_file="${TEMP_DIR}/src/UeSim/Linux/Engine/Plugins/${rel_path}"
+            mkdir -p "$(dirname "$target_file")"
+            cp "$plugin_file" "$target_file" 2>/dev/null || true
         done
     fi
     
@@ -123,18 +149,53 @@ if [ -d "${PROJECT_ROOT}/src/UeSim/Linux/Engine" ]; then
     log "  ✓ UE Engine: ${count} 个文件 ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
 fi
 
+# 3b. UE OpenCV runtime library - 需要随 assets 一起打包
+# UE 二进制在启动时会从 RPATH 中解析 libopencv_world.so.405。
+# 该库通常来自 UnrealEngine 安装目录，而不是项目仓库本身。
+UE_OCV_SRC_DIR="${UE_OCV_SRC_DIR:-/home/user/software/UnrealEngine/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux}"
+UE_OCV_DST_DIR="${TEMP_DIR}/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux"
+if [ -d "${UE_OCV_SRC_DIR}" ]; then
+    log "收集 UE OpenCV 运行库..."
+    mkdir -p "${UE_OCV_DST_DIR}"
+
+    if [ -f "${UE_OCV_SRC_DIR}/libopencv_world.so.405" ]; then
+        cp -a "${UE_OCV_SRC_DIR}/libopencv_world.so.405" "${UE_OCV_DST_DIR}/"
+        file_count=$((file_count + 1))
+        size=$(stat -c%s "${UE_OCV_SRC_DIR}/libopencv_world.so.405" 2>/dev/null || stat -f%z "${UE_OCV_SRC_DIR}/libopencv_world.so.405" 2>/dev/null || echo 0)
+        total_size=$((total_size + size))
+        log "  ✓ libopencv_world.so.405 ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
+    fi
+
+    if [ -f "${UE_OCV_SRC_DIR}/libopencv_world.so" ]; then
+        cp -a "${UE_OCV_SRC_DIR}/libopencv_world.so" "${UE_OCV_DST_DIR}/"
+        file_count=$((file_count + 1))
+        size=$(stat -c%s "${UE_OCV_SRC_DIR}/libopencv_world.so" 2>/dev/null || stat -f%z "${UE_OCV_SRC_DIR}/libopencv_world.so" 2>/dev/null || echo 0)
+        total_size=$((total_size + size))
+        log "  ✓ libopencv_world.so ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
+    fi
+else
+    log "⚠️  UE OpenCV 源目录不存在，跳过: ${UE_OCV_SRC_DIR}"
+fi
+
 # 4. src/robot_mujoco/simulate/build/ - MuJoCo 可执行文件和动态地图
 if [ -d "${PROJECT_ROOT}/src/robot_mujoco/simulate/build" ]; then
     log "收集 MuJoCo 可执行文件和动态地图..."
     mkdir -p "${TEMP_DIR}/src/robot_mujoco/simulate/build"
     
     # 只复制可执行文件和动态地图数据
-    if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" ]; then
-        cp "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" "${TEMP_DIR}/src/robot_mujoco/simulate/build/"
+    MUJOCO_BIN=""
+    if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/robot_mujoco" ]; then
+        MUJOCO_BIN="${PROJECT_ROOT}/src/robot_mujoco/simulate/build/robot_mujoco"
+    elif [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" ]; then
+        MUJOCO_BIN="${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco"
+    fi
+
+    if [ -n "${MUJOCO_BIN}" ]; then
+        cp "${MUJOCO_BIN}" "${TEMP_DIR}/src/robot_mujoco/simulate/build/"
         file_count=$((file_count + 1))
-        size=$(stat -c%s "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" 2>/dev/null || stat -f%z "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" 2>/dev/null || echo 0)
+        size=$(stat -c%s "${MUJOCO_BIN}" 2>/dev/null || stat -f%z "${MUJOCO_BIN}" 2>/dev/null || echo 0)
         total_size=$((total_size + size))
-        log "  ✓ zsibot_mujoco ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
+        log "  ✓ $(basename "${MUJOCO_BIN}") ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
     fi
     
     if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/DynamicMapData.bin" ]; then
@@ -197,19 +258,34 @@ if [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
     log "  ✓ 已删除 bin/sim_launcher"
 fi
 
-# 2. 删除 ONNX 模型文件（排除 zg 和 zg_wheel）
+if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
+    rm -f "${PROJECT_ROOT}/bin/sim_launcher.bin"
+    deleted_count=$((deleted_count + 1))
+    log "  ✓ 已删除 bin/sim_launcher.bin"
+fi
+
+# 2. 删除已转入 assets 包的 ONNX 模型文件
 if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto" ]; then
     for model_dir in "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto"/*; do
         if [ -d "$model_dir" ]; then
             model_name=$(basename "$model_dir")
-            # 排除 zg 和 zg_wheel
-            if [ "$model_name" != "zg" ] && [ "$model_name" != "zg_wheel" ]; then
+            if [ "$model_name" = "xg" ] || [ "$model_name" = "xg_wheel" ] || [ "$model_name" = "zg_wheels" ]; then
                 rm -rf "$model_dir"
                 deleted_count=$((deleted_count + 1))
                 log "  ✓ 已删除 ONNX 模型目录: $model_name"
             fi
         fi
     done
+fi
+
+# 2b. 删除 MC 运行时文件
+if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" ]; then
+    find "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" -maxdepth 1 -type f -delete 2>/dev/null || true
+    count=$(find "${PROJECT_ROOT}/src/robot_mc/build/export/mc/bin" -maxdepth 1 -type f 2>/dev/null | wc -l)
+    if [ "$count" -eq 0 ]; then
+        deleted_count=$((deleted_count + 1))
+        log "  ✓ 已删除 mc/bin 目录下的文件"
+    fi
 fi
 
 # 3. 删除 UE Engine 目录下的文件
@@ -244,6 +320,12 @@ if [ -d "${PROJECT_ROOT}/src/UeSim/Linux/Engine" ]; then
 fi
 
 # 4. 删除 MuJoCo 可执行文件和动态地图
+if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/robot_mujoco" ]; then
+    rm -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/robot_mujoco"
+    deleted_count=$((deleted_count + 1))
+    log "  ✓ 已删除 robot_mujoco"
+fi
+
 if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco" ]; then
     rm -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/zsibot_mujoco"
     deleted_count=$((deleted_count + 1))
@@ -354,7 +436,7 @@ log "SHA256: ${SHA256}"
 log ""
 log "注意："
 log "  - demo_gif 已排除（保留在 Git 仓库中）"
-log "  - zg 和 zg_wheel ONNX 模型已排除"
+log "  - 仅发布 xg、xg_wheel、zg_wheels ONNX 模型"
 log "  - zsibot_mujoco_ue/Binaries/ 已排除（会从 base 包中获取）"
 log "  - robot_mujoco/zsibot_robots/ 已排除（会从 base 包中的 UeSim 目录拷贝）"
 if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then

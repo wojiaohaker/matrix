@@ -117,6 +117,22 @@ copy_models_from_uesim_to_robot_mujoco() {
     
     log "从 UeSim 目录拷贝模型到 robot_mujoco 目录..."
     mkdir -p "$robot_mujoco_dir" || true
+
+    # Only publish the built-in robot models exposed by run_sim.sh 1-5.
+    local published_robots=" xgb xgw zgws go2 go2w "
+
+    # Remove stale built-in model directories from previous releases. Keep
+    # custom because it may contain user-imported URDF cache data.
+    for stale_dir in "$robot_mujoco_dir"/*; do
+        if [ ! -d "$stale_dir" ]; then
+            continue
+        fi
+        stale_name=$(basename "$stale_dir")
+        if [[ "$published_robots" != *" $stale_name "* ]] && [ "$stale_name" != "custom" ]; then
+            rm -rf "$stale_dir" 2>/dev/null || true
+            log "  移除未发布模型目录: ${stale_name}"
+        fi
+    done
     
     local copied_count=0
     local skipped_count=0
@@ -139,8 +155,7 @@ copy_models_from_uesim_to_robot_mujoco() {
             fi
             if [ -d "$robot_dir" ]; then
                 robot_name=$(basename "$robot_dir")
-                # 跳过非机器人目录
-                if [ "$robot_name" != "config" ] && [ "$robot_name" != "SceneLoder" ]; then
+                if [[ "$published_robots" == *" $robot_name "* ]]; then
                     robot_names+=("$robot_name")
                 fi
             fi
@@ -150,7 +165,7 @@ copy_models_from_uesim_to_robot_mujoco() {
         if [ ${#robot_names[@]} -eq 0 ]; then
             while IFS= read -r -d '' robot_dir; do
                 robot_name=$(basename "$robot_dir")
-                if [ "$robot_name" != "config" ] && [ "$robot_name" != "SceneLoder" ]; then
+                if [[ "$published_robots" == *" $robot_name "* ]]; then
                     robot_names+=("$robot_name")
                 fi
             done < <(find "$uesim_model_dir" -maxdepth 1 -type d ! -path "$uesim_model_dir" -print0 2>/dev/null)
@@ -388,4 +403,3 @@ EOFSCRIPT
     log "生成的文件:"
     ls -lh "${chunk_prefix}"* "$merge_script" "$checksum_file" 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}'
 }
-

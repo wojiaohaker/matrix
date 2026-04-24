@@ -23,6 +23,10 @@ src/UeSim/Linux/zsibot_mujoco_ue/Binaries/*
 !src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux/zsibot_mujoco_ue-Linux-Shipping
 !src/UeSim/Linux/zsibot_mujoco_ue/.gitkeep
 
+# MuJoCo robot model mirror generated from UeSim Content/model during install
+src/robot_mujoco/zsibot_robots/*
+!src/robot_mujoco/zsibot_robots/.gitkeep
+
 # Build artifacts
 *.log
 *.tmp
@@ -48,4 +52,3 @@ bin/log.txt
 # OS files
 .DS_Store
 Thumbs.db
-
