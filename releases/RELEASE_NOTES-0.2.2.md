@@ -2,7 +2,7 @@
 
 ## Required Packages
 
-- **assets-0.2.2.tar.gz** (~1020MB)
+- **assets-0.2.2.tar.gz** (~675MB)
   - Launcher files: `bin/sim_launcher`, `bin/sim_launcher.bin`
   - MuJoCo runtime binary and dynamic map payloads
   - MC runtime binaries and shared libraries, including WBC libraries
@@ -24,7 +24,7 @@ Internal robot model directories are not included in this release. `Content/mode
 
 ## Checksums
 
-- `assets-0.2.2.tar.gz`: `4bf96c9a6077aeb78210ed04461dbe186b700b3f2149b0eec49e3713240f1b5c`
+- `assets-0.2.2.tar.gz`: `ec18164489775c9f5ac1f73da4790c8c5d18f701cddf48ec1a8e8d7b3861e8fc`
 - `base-0.2.2.tar.gz`: `2cbb40861e89c40735cd64b24e8b64d88d012f335bdb405b5ed52db86f8b4e38`
 
 Verify all downloaded packages with:
