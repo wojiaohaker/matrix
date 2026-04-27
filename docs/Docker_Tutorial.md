@@ -18,6 +18,24 @@ The launch script is:
 scripts/docker/docker_run_gpu.sh
 ```
 
+## Script Relationship
+
+There are two Docker-related scripts with different responsibilities:
+
+- `scripts/docker/docker_run_gpu.sh` runs on the host machine. It starts the Docker container, mounts the repository to `/workspace`, enables GPU/X11/device passthrough, and forwards the command to run inside the container.
+- `scripts/docker/entrypoint.sh` runs inside the Docker image as the container entrypoint. It sources ROS and workspace setup files, prepares runtime environment variables/directories, then executes the command provided by `docker_run_gpu.sh`.
+
+The normal launch flow is:
+
+```text
+host: scripts/docker/docker_run_gpu.sh
+  -> docker run zsibot/matrix:latest ...
+    -> container: scripts/docker/entrypoint.sh
+      -> ./bin/sim_launcher
+```
+
+Users normally run only `scripts/docker/docker_run_gpu.sh`; `entrypoint.sh` is wired into the Docker image.
+
 ## Prerequisites
 
 Install these on the host machine first:
