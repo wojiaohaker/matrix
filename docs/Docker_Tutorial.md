@@ -1,116 +1,79 @@
 # Docker Tutorial
 
-This guide explains how to build and run MATRiX in Docker on Linux with GPU acceleration and X11 display forwarding.
+This guide explains how to run MATRiX in a GPU-enabled Docker container on Linux with X11 display forwarding.
 
-## What This Tutorial Does
+## What This Setup Does
 
-Using the provided Docker setup, you can:
+The provided Docker run script:
 
-- build a ready-to-use development image;
-- start a container with NVIDIA GPU passthrough;
-- display GUI applications from the container on the host;
-- mount the current repository into the container at `/workspace`.
+- starts a container with NVIDIA GPU passthrough;
+- forwards the host X11 display for GUI applications;
+- mounts the current repository into the container at `/workspace`;
+- uses host networking for ROS, MuJoCo, and launcher communication;
+- passes through common input, USB, DRI, Vulkan, and GLVND devices/libraries.
 
-The recommended launch script is `scripts/docker_run_gpu.sh`.
+The launch script is:
+
+```bash
+scripts/docker/docker_run_gpu.sh
+```
 
 ## Prerequisites
 
-Before you begin, make sure the following are installed on the host machine:
+Install these on the host machine first:
 
-- **Docker**: install it from the official guide: https://docs.docker.com/engine/install/
-- **Docker post-install configuration**: follow https://docs.docker.com/engine/install/linux-postinstall/ if you want to run Docker without `sudo`
-- **NVIDIA Container Toolkit**: install it from https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#installation-guide so Docker containers can access the GPU
-- **A Linux desktop session with X11**: the provided script forwards the host display into the container
+- Docker: https://docs.docker.com/engine/install/
+- NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+- A Linux desktop session with X11 display forwarding available.
+- A MATRiX Docker image. The default image name is `zsibot/matrix:latest`.
 
-## Important Notes Before Running
+If your image has a different name, set `MATRIX_DOCKER_IMAGE` when running the script.
 
-- Run all commands from the **repository root**.
-- The run script mounts `$(pwd)` to `/workspace`, so if you start it from another directory, the wrong path will be mounted.
-- The script is designed for Linux hosts with NVIDIA GPUs.
-- If you are using Docker without `sudo`, simply remove `sudo` from the examples below.
+## Start MATRiX
 
-## Step 1: Build the Docker Image
-
-> **💡 对于国内用户的提示 (For users in China):**
->
-> 在构建 Docker 镜像期间，为了加速 `apt-get`、`pip` 或 `ros` 依赖的下载，`Dockerfile` 中配置了本地的 HTTP/HTTPS 代理：
-> ```dockerfile
-> # Configure bashrc for root (Proxy + PS1 + ROS)
-> RUN echo "export http_proxy=http://127.0.0.1:7897" >> /root/.bashrc && \
->     echo "export https_proxy=http://127.0.0.1:7897" >> /root/.bashrc
-> ```
-> 如果你有自己的代理软件（如 Clash、V2Ray 等），请**务必在构建前修改 `Dockerfile` 中对应的端口号**（如这里是 `7897`），并确保代理软件允许局域网连接。
-> 同样地，请检查并修改文件中为 `matrix_user` 设置的代理端口。
-> 如果你不需要代理，可以直接将 `Dockerfile` 中涉及 `http_proxy` 和 `https_proxy` 的行用 `#` 注释掉或删除。
-
-From the repository root, build the image:
+Run from the repository root:
 
 ```bash
-bash docker/docker_build_image.sh
+bash scripts/docker/docker_run_gpu.sh
 ```
 
-### What This Command Does
-
-- builds an image named `zsibot/matrix:latest`;
-- uses the repository root `.` as the build context;
-- installs system dependencies, ROS 2 Humble, and project dependencies;
-- runs `build.sh` during image creation.
-
-### Expected Result
-
-If the build succeeds, Docker will finish without errors and you will have a local image named `zsibot/matrix:latest`.
-
-You can verify it with:
+By default this runs:
 
 ```bash
-sudo docker images | grep zsibot/matrix
+./bin/sim_launcher
 ```
 
-## Step 2: Start the Container
-
-Launch the provided GPU-enabled container (must be run on the host machine):
+To use a different image:
 
 ```bash
-bash docker/docker_run_gpu.sh
+MATRIX_DOCKER_IMAGE=matrix-dev:latest bash scripts/docker/docker_run_gpu.sh
 ```
 
-## Step 3: Join the Container
-
-Once the container is running in the background, you can enter it using:
+To run a custom command inside the container:
 
 ```bash
-bash docker/docker_join.sh
+bash scripts/docker/docker_run_gpu.sh bash
 ```
 
-## What the Launch Script Does
+## Container Name
 
-The script `docker/docker_run_gpu.sh` automatically:
-
-- removes any existing container named `MATRiX`;
-- enables local X11 access with `xhost +local:root`;
-- starts the container with `--gpus all` in detached mode;
-- mounts the current repository to `/workspace`;
-- mounts X11 and Vulkan-related host paths for GUI rendering;
-- adds necessary hardware permissions to `matrix_user`;
-- uses host networking.
-
-## Inside the Container
-
-After using `docker_join.sh` to enter the container.
-
-Key behavior:
-
-- the default user is `matrix_user`;
-- the repository is available at `/workspace`;
-- ROS 2 Humble is sourced automatically;
-- if `/workspace/install/setup.bash` exists, it is sourced automatically too.
-
-
-## Quick Start Summary
+The default container name is `matrix-sim`. Override it if needed:
 
 ```bash
-cd /path/to/matrix
-bash docker/docker_build_image.sh
-bash docker/docker_run_gpu.sh
-bash docker/docker_join.sh
+MATRIX_DOCKER_CONTAINER=matrix-test bash scripts/docker/docker_run_gpu.sh
 ```
+
+## Join a Running Container
+
+If the container is still running and you need another shell:
+
+```bash
+docker exec -it matrix-sim bash
+```
+
+## Notes
+
+- Run the script from the repository root. It mounts `$(pwd)` into `/workspace`.
+- The script removes an existing container with the same name before starting a new one.
+- The script temporarily allows local root X11 access with `xhost +local:root` and restores it on exit.
+- If Docker requires sudo on your host, run the script with `sudo -E` so `DISPLAY` is preserved.
