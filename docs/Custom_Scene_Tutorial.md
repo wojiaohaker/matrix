@@ -1,31 +1,151 @@
-# Custom Scene Simulation Platform
-This simulation platform introduces a **custom scene functionality** that enables users to define scene structure and behavioral logic through simple JSON files. The system automatically generates corresponding **static scenes, dynamic pedestrians, and physics simulation configurations**, achieving efficient and flexible testing and verification.
+# Custom Scene Tutorial
+
+This tutorial explains how to use MATRiX custom scenes.
+
+In the custom-scene workflow, Unreal Engine (UE) reads `scene/scene.json` at startup, creates the visual scene from the JSON content, and keeps it aligned with the corresponding MuJoCo physical scene. With one JSON file, you can describe:
+
+- static cubes and cylinders;
+- dynamic pedestrians;
+- pedestrian walking speed;
+- waypoint-based walking trajectories;
+- mixed scenes that contain both obstacles and moving people.
 
 ---
 
-## 🌍 Feature Overview
+## What Happens When You Load a Custom Scene
 
-By defining scene elements in JSON files, the platform automatically generates corresponding **Mujoco XML files** and constructs synchronized 3D simulation scenes in Unreal Engine (UE), achieving **unified visual and physical simulation**.
+When you select **Custom Map** in the launcher, the system uses `scene/scene.json` as the input scene description.
 
-### Key Features
+The pipeline is:
 
-- **Static Scene Construction**  
-  Build structures such as buildings, obstacles, and roads using variable-sized cube and cylinder elements.
+1. Read `scene/scene.json`
+2. Parse each `Element` entry
+3. Generate the corresponding static objects and dynamic pedestrians
+4. Synchronize the UE visual scene and MuJoCo physics configuration
+5. Start simulation with the generated custom map
 
-- **Dynamic Pedestrian System**  
-  - Support for multi-pedestrian parallel simulation  
-  - Configurable walking speeds  
-  - Custom polyline trajectory definition  
-  - Automatic obstacle avoidance and path adjustment  
-
-- **Terrain and Path Diversity**  
-  Users can freely define terrain types, path layouts, pedestrian quantities, and distributions to rapidly simulate various real-world scenarios.
+This means `scene.json` is the single source of truth for the custom scene.
 
 ---
 
-## 🧱 Supported Elements and Parameters
+## Quick Start
 
-### Cube1
+### Step 1: Prepare a Scene JSON File
+
+Create a new JSON file, or start from one of the examples in the `scene/` directory:
+
+- `scene/scene_example_1.json`
+- `scene/scene_example_2.json`
+- `scene/scene_example_3.json`
+
+### Step 2: Write Your Scene Content
+
+Define scene elements in JSON.
+
+Currently supported element categories are:
+
+- static cube: `cube1`
+- static cube: `cube2`
+- static cylinder: `cylinder1`
+- dynamic pedestrian: `human1`
+
+### Step 3: Replace the Active Scene File
+
+Copy your scene file to `scene/scene.json`:
+
+```bash
+cp your_custom_scene.json scene/scene.json
+```
+
+If you want to test an existing example directly:
+
+```bash
+cp scene/scene_example_1.json scene/scene.json
+```
+
+### Step 4: Launch MATRiX
+
+Start the simulator:
+
+```bash
+./open_sim_launcher
+```
+
+Then choose **Custom Map** in the launcher.
+
+UE will read `scene/scene.json` and initialize the custom scene from it.
+
+---
+
+## Scene File Rules
+
+Before editing `scene.json`, keep these rules in mind:
+
+- the root object contains multiple entries such as `Element1`, `Element2`, `Element3`;
+- each root key must be unique;
+- each element must contain the fields required by its type;
+- static objects use `type: "static"`;
+- pedestrians use `type: "dynamic"`;
+- dynamic pedestrians can include `avoid`, `velocity`, and `trajectory`;
+- coordinates use `x`, `y`, `z` fields.
+
+---
+
+## Minimal Scene Template
+
+The following is the smallest useful scene structure:
+
+```json
+{
+  "Element1": {
+    "name": "obstacle1",
+    "type": "static",
+    "model": "cube1",
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 50
+    },
+    "rotation": {
+      "pitch": 0,
+      "yaw": 0,
+      "roll": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    }
+  }
+}
+```
+
+---
+
+## Common Field Meanings
+
+Most elements share the following fields:
+
+- `name`: element name, recommended to be unique and meaningful
+- `type`: `static` or `dynamic`
+- `model`: model type such as `cube1`, `cube2`, `cylinder1`, `human1`
+- `position`: initial position in 3D space
+- `rotation`: element orientation using `pitch`, `yaw`, `roll`
+- `scale`: size multiplier of the object or character
+
+Dynamic pedestrians additionally support:
+
+- `avoid`: whether obstacle avoidance is enabled
+- `velocity`: walking speed
+- `trajectory`: waypoint sequence that defines the walking path
+
+---
+
+## Supported Elements
+
+### 1. `cube1`
+
+Use `cube1` for static box-shaped obstacles or large block structures.
 
 ```json
 {
@@ -52,13 +172,20 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Recommended use:**
+
+- walls
+- buildings
+- large obstacles
+- road boundaries
+
 **Parameters:**
-- `name`: Unique identifier for the element
-- `type`: Element behavior type (`static` for fixed obstacles)
-- `model`: Geometric shape (`cube1`)
-- `position`: 3D coordinates in world space (x, y, z in cm)
-- `rotation`: Euler angles (pitch, yaw, roll in degrees)
-- `scale`: Size multipliers along each axis
+
+- `type`: must be `static`
+- `model`: must be `cube1`
+- `position`: object center position
+- `rotation`: object rotation
+- `scale`: object size multiplier
 
 <p align="center">
   <img src="../demo_gif/Element/Cube1.png" alt="Cube1" width="600px"/>
@@ -66,7 +193,9 @@ By defining scene elements in JSON files, the platform automatically generates c
 
 ---
 
-### Cube2
+### 2. `cube2`
+
+Use `cube2` for static box-shaped obstacles or large block structures, cube2 has a different texture.
 
 ```json
 {
@@ -93,13 +222,20 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Recommended use:**
+
+- columns
+- fences
+- narrow barriers
+- interior obstacles
+
 **Parameters:**
-- `name`: Unique identifier for the element
-- `type`: Element behavior type (`static` for fixed obstacles)
-- `model`: Geometric shape (`cube2`)
-- `position`: 3D coordinates in world space (x, y, z in cm)
-- `rotation`: Euler angles (pitch, yaw, roll in degrees)
-- `scale`: Size multipliers along each axis
+
+- `type`: must be `static`
+- `model`: must be `cube2`
+- `position`: object center position
+- `rotation`: object rotation
+- `scale`: object size multiplier
 
 <p align="center">
   <img src="../demo_gif/Element/Cube2.png" alt="Cube2" width="200px"/>
@@ -107,7 +243,9 @@ By defining scene elements in JSON files, the platform automatically generates c
 
 ---
 
-### Cylinder1
+### 3. `cylinder1`
+
+Use `cylinder1` for cylindrical static obstacles.
 
 ```json
 {
@@ -134,13 +272,20 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Recommended use:**
+
+- pillars
+- poles
+- round barriers
+- landmark objects
+
 **Parameters:**
-- `name`: Unique identifier for the element
-- `type`: Element behavior type (`static` for fixed obstacles)
-- `model`: Geometric shape (`cylinder1`)
-- `position`: 3D coordinates in world space (x, y, z in cm)
-- `rotation`: Euler angles (pitch, yaw, roll in degrees)
-- `scale`: Size multipliers along each axis
+
+- `type`: must be `static`
+- `model`: must be `cylinder1`
+- `position`: object center position
+- `rotation`: object rotation
+- `scale`: object size multiplier
 
 <p align="center">
   <img src="../demo_gif/Element/Cylinder.png" alt="Cylinder1" width="200px"/>
@@ -148,7 +293,9 @@ By defining scene elements in JSON files, the platform automatically generates c
 
 ---
 
-### Human1 (Dynamic Pedestrian)
+### 4. `human1`
+
+Use `human1` for dynamic pedestrians that move along a defined trajectory.
 
 ```json
 {
@@ -189,16 +336,24 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**What this element supports:**
+
+- initial spawn position
+- initial orientation
+- walking speed
+- optional obstacle avoidance
+- multi-point trajectory walking
+
 **Parameters:**
-- `name`: Unique identifier for the pedestrian
-- `type`: Element behavior type (`dynamic` for moving entities)
-- `model`: Character model (`human1`)
-- `avoid`: Enable obstacle avoidance behavior (`true`/`false`)
-- `position`: Initial spawn coordinates (x, y, z in cm)
-- `rotation`: Initial orientation (pitch, yaw, roll in degrees)
-- `scale`: Size multipliers along each axis
-- `velocity`: Walking speed (meters per second)
-- `trajectory`: Polyline path definition with waypoints (point1, point2, etc.)
+
+- `type`: must be `dynamic`
+- `model`: must be `human1`
+- `avoid`: `true` or `false`
+- `position`: initial spawn position
+- `rotation`: initial character orientation
+- `scale`: character size multiplier
+- `velocity`: walking speed
+- `trajectory`: ordered waypoints such as `point1`, `point2`, `point3`
 
 <p align="center">
   <img src="../demo_gif/Element/Human.png" alt="Human1" width="600px"/>
@@ -206,9 +361,40 @@ By defining scene elements in JSON files, the platform automatically generates c
 
 ---
 
-## 📋 Scene Definition Examples
+## How Pedestrian Trajectories Work
 
-### Example 1: Basic Pedestrian Movement
+The pedestrian path is defined by the `trajectory` object.
+
+Example:
+
+```json
+"trajectory": {
+  "point1": {
+    "x": 1400,
+    "y": -100,
+    "z": 0
+  },
+  "point2": {
+    "x": -1400,
+    "y": -100,
+    "z": 0
+  }
+}
+```
+
+This means the pedestrian will:
+
+1. spawn at the initial `position`
+2. walk toward `point1`
+3. continue toward `point2`
+
+You can extend the path by adding more waypoints such as `point3`, `point4`, and so on.
+
+---
+
+## Example 1: Basic Pedestrian Movement
+
+This example creates three pedestrians moving in parallel.
 
 ```json
 {
@@ -300,13 +486,17 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Use case:** test parallel pedestrian movement and different initial headings.
+
 <p align="center">
   <img src="../demo_gif/Scene/scene1.gif" alt="scene1" width="600px"/>
 </p>
 
 ---
 
-### Example 2: Pedestrians with Static Obstacles
+## Example 2: Pedestrians with Static Obstacles
+
+This example adds `cube1` and `cube2` obstacles to the scene.
 
 ```json
 {
@@ -440,13 +630,22 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Use case:** test pedestrian obstacle avoidance in a structured scene.
+
 <p align="center">
   <img src="../demo_gif/Scene/scene2.gif" alt="scene2" width="600px"/>
 </p>
 
 ---
 
-### Example 3: Complex Scene with Multiple Obstacles
+## Example 3: Mixed Complex Scene
+
+This example combines:
+
+- multiple pedestrians;
+- multiple obstacle types;
+- different obstacle sizes;
+- multi-segment trajectories.
 
 ```json
 {
@@ -601,56 +800,62 @@ By defining scene elements in JSON files, the platform automatically generates c
 }
 ```
 
+**Use case:** test interaction between multiple pedestrians and multiple obstacle types in a richer custom scene.
+
 <p align="center">
   <img src="../demo_gif/Scene/scene3.gif" alt="scene3" width="600px"/>
 </p>
 
 ---
 
-## ⚙️ Automatic Conversion and Synchronization
+## Recommended Editing Workflow
 
-The platform automatically:
-- Parses JSON files and generates Mujoco XML configurations
-- Synchronizes UE scenes with Mujoco physics engine
-- Ensures visual models align with physics collision bodies for accurate simulation
+For efficient iteration, use this workflow:
 
----
-
-## 🚶‍♂️ Application Scenarios
-
-- **Pedestrian Avoidance Algorithm Verification**  
-  Test intelligent agent obstacle avoidance behaviors in controlled environments
-
-- **Multi-Agent Path Planning**  
-  Evaluate coordination strategies for multiple autonomous agents
-
-- **Urban Traffic and Crowd Simulation**  
-  Model realistic pedestrian flow patterns in city scenarios
-
-- **Robot Navigation Testing**  
-  Verify navigation algorithms across diverse terrain conditions
-
-- **Pedestrian Detection and Prediction**  
-  Assess performance of detection and trajectory prediction models
+1. start from an existing example file;
+2. modify only one or two elements at a time;
+3. copy the file to `scene/scene.json`;
+4. launch MATRiX and choose **Custom Map**;
+5. verify object position, scale, and pedestrian trajectory;
+6. repeat until the scene behaves as expected.
 
 ---
 
-## 🚀 Key Advantages
+## Common Mistakes
 
-- **Rapid Modeling**  
-  Define complex scenes using simple JSON without manual construction
+If the custom scene does not load as expected, check the following first:
 
-- **Flexible Extension**  
-  Support for multiple geometric primitives and terrain types with easy extensibility
-
-- **Efficient Verification**  
-  Quickly switch between scene configurations to test algorithm robustness and generalization
-
-- **Physics Consistency**  
-  Synchronized UE visual scenes and Mujoco physics engine ensure simulation accuracy
+- the file name is exactly `scene.json`
+- the file is placed in the `scene/` directory
+- `Element1`, `Element2`, ... keys are unique
+- `type` and `model` match supported values
+- dynamic pedestrians include a valid `trajectory`
+- JSON syntax is valid, including commas and braces
+- you selected **Custom Map** in the launcher
 
 ---
 
-## 📄 Summary
+## Typical Use Cases
 
-The custom scene functionality enables users to build diverse simulation environments with minimal effort. Through the automated JSON → XML → UE conversion pipeline, it achieves seamless integration from structural definition to physics simulation, providing an efficient and scalable experimental platform for algorithm development and testing.
+This feature is useful for:
+
+- pedestrian avoidance algorithm validation
+- multi-agent path planning evaluation
+- urban crowd or traffic-style scene construction
+- robot navigation testing under custom obstacle layouts
+- perception, detection, and trajectory prediction experiments
+
+---
+
+## Summary
+
+The custom scene system lets you describe a complete simulation scene with a single JSON file.
+
+In practice, the workflow is simple:
+
+1. edit `scene/scene.json`
+2. launch MATRiX with `./open_sim_launcher`
+3. choose **Custom Map**
+4. let UE initialize the scene from your JSON definition
+
+With this mechanism, you can rapidly build repeatable scenes containing static obstacles and dynamic pedestrians, while keeping the UE visual scene and MuJoCo physical scene synchronized.

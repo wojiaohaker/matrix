@@ -1,5 +1,4 @@
-
-## Robot Type Selection
+# Robot Type Selection
 
 | Robot ID | Robot Type | Description |
 |----------|------------|-------------|
@@ -56,6 +55,9 @@
 | 13     | OfficeWorld  | Two-story office building scene |
 | 14     | 3DGSWorld    | 3D Gaussian Splatting Reconstruction Map |
 | 15     | MoonWorld    | Moon Surface Simulation Map, Dynamic Ground Surface |
+| 20     | Cali Room    | Calibration Room Map |
+| 21     | Home         | Home Map |
+| 22     | Laboratory   | Laboratory Map |
 
 ---
 
@@ -137,4 +139,19 @@
 ## MoonWorld Map (ID: 15)
 <h1 title="MoonWorld Map">
     <a href="#"><img alt="MoonWorld Map" src="../demo_gif/Maps/Moon.png" width="600px"/></a>
+</h1>
+
+## Calibration Room Map (ID: 20)
+<h1 title="Calibration Room Map">
+    <a href="#"><img alt="Calibration Room Map" src="../demo_gif/Maps/CALIBRATION.png" width="600px"/></a>
+</h1>
+
+## Home Map (ID: 21)
+<h1 title="Home Map">
+    <a href="#"><img alt="Home Map" src="../demo_gif/Maps/HOME.png" width="600px"/></a>
+</h1>
+
+## Laboratory Map (ID: 22)
+<h1 title="Laboratory Map">
+    <a href="#"><img alt="Laboratory Map" src="../demo_gif/Maps/LABORATORY.png" width="600px"/></a>
 </h1>

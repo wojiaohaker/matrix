@@ -63,27 +63,17 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
 ## 📋 包说明
 
 ### 资源文件包 (assets-0.2.2.tar.gz) - 必需
-- **大小**: ~1020MB
 - **内容**:
   - `bin/sim_launcher`: 模拟器启动器
-  - `bin/sim_launcher.bin`: 原生启动器二进制
-  - MuJoCo 运行时二进制和动态地图数据
-  - MC 运行时二进制和共享库，包括 WBC 库
-  - 已发布机器人需要的 ONNX 控制模型：`xg`、`xg_wheel`、`zg_wheels`
-  - UE 运行时依赖，包括 OpenCV 共享库
+  - 核心二进制依赖文件
 - **必需**: ✅ 是
 
 ### 基础包 (base-0.2.2.tar.gz) - 必需
-- **大小**: ~2.0GB
+- **大小**: ~2.3GB
 - **内容**:
   - EmptyWorld地图
   - 核心蓝图和系统文件
   - Chunk 0 (pakchunk0)
-  - 已发布机器人模型目录：`xgb`、`xgw`、`zgws`、`go2`、`go2w`
-  - 运行时模板目录：`Content/model/config` 和 `Content/model/SceneLoder`
-- **不包含**:
-  - `xxg` 和其他未发布机器人模型目录
-  - `Content/model/dynamicmap`，MoonWorld 运行时会从 `dynamicmaps/moonworld.bin` 创建并拷贝
 - **必需**: ✅ 是
 
 ### 共享资源包 (shared-0.2.2.tar.gz) - 推荐
@@ -98,42 +88,32 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
 
 | 地图包 | 大小 | Chunk ID | 说明 |
 |--------|------|----------|------|
-| 3DGSWorld | ~207MB | 25 | 3D 高斯地图 |
-| ApartmentWorld | ~504MB | - | 公寓场景 |
-| CaliWorld | ~16MB | - | 标定场景 |
-| CrowdWorld | ~41MB | 14 | 人群场景 |
-| CustomWorld | ~20MB | 24 | 自定义场景 |
-| HouseWorld | ~385MB | 17 | 房屋场景 |
-| IROSFlatWorld | ~300KB | 18 | IROS 平地场景 |
-| IROSFlatWorld2025 | ~160KB | 21 | IROS 2025 平地场景 |
-| IROSSlopedWorld | ~251MB | 19 | IROS 斜坡场景 |
-| IROSSloppedWorld2025 | ~160KB | 22 | IROS 2025 斜坡场景 |
-| MeetRoomWorld | ~151MB | - | 会议室场景 |
-| MoonWorld | ~605MB | 26 | 月球环境 |
-| OfficeWorld | ~414MB | 23 | 办公室场景 |
-| RunningWorld | ~36MB | 16 | 跑步场景 |
-| SceneWorld | ~381MB | 11 | 仓库场景 |
+| SceneWorld | ~423MB | 11 | 仓库场景 |
 | Town10World | ~1.1GB | 12 | 城镇场景（大） |
-| Town10Zombie | ~631MB | 20 | 僵尸场景（大） |
-| VeniceWorld | ~329MB | 15 | 威尼斯场景 |
-| YardWorld | ~656MB | 13 | 庭院场景 |
+| YardWorld | ~695MB | 13 | 庭院场景 |
+| CrowdWorld | ~60MB | 14 | 人群场景 |
+| VeniceWorld | ~328MB | 15 | 威尼斯场景 |
+| RunningWorld | ~36MB | 16 | 跑步场景 |
+| HouseWorld | ~265MB | 17 | 房屋场景 |
+| IROSFlatWorld | ~300KB | 18 | IROS平地场景 |
+| IROSSlopedWorld | ~250MB | 19 | IROS斜坡场景 |
+| Town10Zombie | ~628MB | 20 | 僵尸场景（大） |
+| IROSFlatWorld2025 | ~148KB | 21 | IROS 2025平地场景 |
+| IROSSloppedWorld2025 | ~149KB | 22 | IROS 2025斜坡场景 |
+| OfficeWorld | ~418MB | 23 | 办公室场景 |
+| CustomWorld | ~22MB | 24 | 自定义场景 |
+| 3DGSWorld | ~206MB | 25 | 3D高斯地图 |
+| MoonWorld | ~603MB | 26 | 月球环境 |
 
 ## 🔍 验证安装
 
 安装后检查：
 
 ```bash
-# 1. 检查启动器资源
-ls -lh bin/sim_launcher bin/sim_launcher.bin
+# 1. 检查资源文件 (应存在且 >1MB)
+ls -lh bin/sim_launcher
 
-# 2. 检查仅发布的机器人模型
-find src/UeSim/Linux/zsibot_mujoco_ue/Content/model -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
-find src/robot_mujoco/zsibot_robots -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
-
-# 3. 检查已发布的 ONNX 模型目录
-find src/robot_mc/build/export/onnx_model_crypto -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
-
-# 4. 检查 PAK 文件
+# 2. 检查 PAK 文件
 cd src/UeSim/Linux/zsibot_mujoco_ue/Content/Paks
 ls -lh pakchunk*.pak
 ```
@@ -142,9 +122,6 @@ ls -lh pakchunk*.pak
 - `pakchunk0-Linux.pak` - 基础包（必需）
 - `pakchunk1-Linux.pak` - 共享资源包（如果已安装）
 - `pakchunk11-Linux.pak` 等 - 地图包（如果已安装）
-- UeSim 机器人模型目录：`SceneLoder`、`config`、`go2`、`go2w`、`xgb`、`xgw`、`zgws`
-- MuJoCo 机器人镜像目录：`go2`、`go2w`、`xgb`、`xgw`、`zgws`
-- ONNX 模型目录：`xg`、`xg_wheel`、`zg_wheels`
 
 ## 🎮 使用
 
@@ -152,8 +129,7 @@ ls -lh pakchunk*.pak
 
 ```bash
 # 已在 matrix 根目录
-./scripts/run_sim.sh 1 0  # XGB机器人，CustomWorld地图
-./scripts/run_sim.sh 1 1  # XGB机器人，Warehouse地图（需要SceneWorld地图包）
+./bin/sim_launcher
 ```
 
 ## ❓ 常见问题

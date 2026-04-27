@@ -57,6 +57,9 @@
 | 13     | OfficeWorld  | 两层办公楼场景 |
 | 14     | 3DGSWorld    | 3D 高斯泼溅重建地图 |
 | 15     | MoonWorld    | 月球表面仿真地图，动态地面 |
+| 20     | Cali Room    | 标定室地图 |
+| 21     | Home         | 家居地图 |
+| 22     | Laboratory   | 实验室地图 |
 
 ---
 
@@ -138,4 +141,19 @@
 ## MoonWorld Map (ID: 15)
 <h1 title="MoonWorld Map">
     <a href="#"><img alt="MoonWorld Map" src="../demo_gif/Maps/Moon.png" width="600px"/></a>
+</h1>
+
+## Calibration Room Map (ID: 20)
+<h1 title="Calibration Room Map">
+    <a href="#"><img alt="Calibration Room Map" src="../demo_gif/Maps/CALIBRATION.png" width="600px"/></a>
+</h1>
+
+## Home Map (ID: 21)
+<h1 title="Home Map">
+    <a href="#"><img alt="Home Map" src="../demo_gif/Maps/HOME.png" width="600px"/></a>
+</h1>
+
+## Laboratory Map (ID: 22)
+<h1 title="Laboratory Map">
+    <a href="#"><img alt="Laboratory Map" src="../demo_gif/Maps/LABORATORY.png" width="600px"/></a>
 </h1>
