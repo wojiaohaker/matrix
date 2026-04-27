@@ -15,6 +15,23 @@ if [ ! -d "$DEPS_DIR" ]; then
     exit 1
 fi
 
+install_deb_glob() {
+    local matched=0
+    local pkg
+
+    for pkg in "$@"; do
+        if [ -f "$pkg" ]; then
+            sudo dpkg -i "$pkg"
+            matched=1
+        fi
+    done
+
+    if [ "$matched" -eq 0 ]; then
+        echo "ERROR: No package matched: $*"
+        exit 1
+    fi
+}
+
 sudo apt-get install protobuf-compiler -y
 sudo apt-get install libspdlog-dev -y
 sudo apt install libglfw3-dev libxinerama-dev libxcursor-dev libxi-dev libyaml-cpp-dev -y
@@ -35,10 +52,12 @@ sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
 sudo apt install libqt5x11extras5-dev
 
-sudo dpkg -i "$DEPS_DIR"/zsibot_common_*.deb
-sudo dpkg -i "$DEPS_DIR/ecal_5.13.3-1ppa1~jammy_amd64.deb"
-sudo dpkg -i "$DEPS_DIR/mujoco_3.3.0_x86_64_Linux.deb"
-sudo dpkg -i "$DEPS_DIR/onnx_1.51.0_x86_64_jammy_Linux.deb"
+install_deb_glob "$DEPS_DIR"/lcm_*.deb
+install_deb_glob "$DEPS_DIR"/zsibot_common_*.deb
+install_deb_glob "$DEPS_DIR"/robot-forward_*.deb
+install_deb_glob "$DEPS_DIR"/ecal_*.deb
+install_deb_glob "$DEPS_DIR"/mujoco_*.deb
+install_deb_glob "$DEPS_DIR"/onnx_*.deb
 
 sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools \
     qml-module-qtquick-controls qml-module-qtquick-controls2 \

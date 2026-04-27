@@ -51,6 +51,23 @@ echo "[INFO] custom name: $CUSTOM_NAME"
 echo "[INFO] custom urdf: $CUSTOM_URDF"
 echo "[INFO] force reimport: $FORCE_REIMPORT"
 
+run_env_check() {
+    if [[ "${MATRIX_SKIP_ENV_CHECK:-0}" == "1" ]]; then
+        echo "[INFO] Environment check skipped by MATRIX_SKIP_ENV_CHECK=1"
+        return 0
+    fi
+
+    local checker="$MATRIX_ROOT/scripts/check_env.sh"
+    if [[ ! -x "$checker" ]]; then
+        echo "[WARN] Environment checker not found or not executable: $checker"
+        return 0
+    fi
+
+    "$checker" custom --custom-urdf "$CUSTOM_URDF"
+}
+
+run_env_check
+
 MODEL_DIR="$MATRIX_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Content/model"
 UE_CUSTOM_ROOT="$MODEL_DIR/custom"
 UE_CACHE_ROOT="$UE_CUSTOM_ROOT/_cache"

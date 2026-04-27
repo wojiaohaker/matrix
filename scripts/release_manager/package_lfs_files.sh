@@ -58,7 +58,7 @@ if [ -d "${PROJECT_ROOT}/bin" ]; then
     fi
 fi
 
-# 2. src/robot_mc/build/export/onnx_model_crypto/ - ONNX 模型（只发布 run_sim.sh 1-5 需要的控制模型）
+# 2. src/robot_mc/build/export/onnx_model_crypto/ - ONNX 模型（只发布 run_sim.sh 1-3 需要的控制模型）
 if [ -d "${PROJECT_ROOT}/src/robot_mc/build/export/onnx_model_crypto" ]; then
     log "收集 ONNX 模型文件（仅 xg、xg_wheel、zg_wheels）..."
     mkdir -p "${TEMP_DIR}/src/robot_mc/build/export/onnx_model_crypto"

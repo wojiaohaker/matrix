@@ -29,6 +29,27 @@ if [[ "${SIM_LAUNCHER_SKIP_CUSTOM_URDF_WRAPPER:-0}" != "1" ]] && [[ "$ROBOT_ARG"
     fi
 fi
 
+run_env_check() {
+    if [[ "${MATRIX_SKIP_ENV_CHECK:-0}" == "1" ]]; then
+        echo "[INFO] Environment check skipped by MATRIX_SKIP_ENV_CHECK=1"
+        return 0
+    fi
+
+    local checker="$PROJECT_ROOT/scripts/check_env.sh"
+    if [[ ! -x "$checker" ]]; then
+        echo "[WARN] Environment checker not found or not executable: $checker"
+        return 0
+    fi
+
+    "$checker" runtime \
+        --robot "$ROBOT_ARG" \
+        --scene "$SCENE_ID" \
+        --mujoco "$MUJOCORUNNING" \
+        --offscreen "$OFFSCREEN"
+}
+
+run_env_check
+
 #######################################
 # 全局 PID 管理
 #######################################

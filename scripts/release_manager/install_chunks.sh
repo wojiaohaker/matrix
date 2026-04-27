@@ -17,6 +17,10 @@ GITHUB_RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSI
 TARGET_DIR="${PROJECT_ROOT}/src/UeSim/Linux/zsibot_mujoco_ue"
 PAK_DIR="${TARGET_DIR}/Content/Paks"
 
+if [ "${MATRIX_SKIP_ENV_CHECK:-0}" != "1" ] && [ -x "${PROJECT_ROOT}/scripts/check_env.sh" ]; then
+    "${PROJECT_ROOT}/scripts/check_env.sh" install
+fi
+
 # 检查并安装下载工具（优先多线程工具）
 check_and_install_download_tools() {
     # 如果已有 aria2 或 axel，直接返回

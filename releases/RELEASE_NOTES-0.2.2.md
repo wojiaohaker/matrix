@@ -15,7 +15,7 @@
   - Published robot model directories: `xgb`, `xgw`, `zgws`, `go2`, `go2w`
   - Runtime template directories: `Content/model/config`, `Content/model/SceneLoder`
 
-`xxg` and other internal robot model directories are not included in this release. `Content/model/dynamicmap` is created at runtime for MoonWorld from `dynamicmaps/moonworld.bin`.
+Internal robot model directories are not included in this release. `Content/model/dynamicmap` is created at runtime for MoonWorld from `dynamicmaps/moonworld.bin`.
 
 ## Recommended / Optional Packages
 

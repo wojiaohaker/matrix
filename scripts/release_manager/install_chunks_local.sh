@@ -15,6 +15,10 @@ RELEASE_DIR="${PROJECT_ROOT}/releases"
 TARGET_DIR="${PROJECT_ROOT}/src/UeSim/Linux/zsibot_mujoco_ue"
 PAK_DIR="${TARGET_DIR}/Content/Paks"
 
+if [ "${MATRIX_SKIP_ENV_CHECK:-0}" != "1" ] && [ -x "${PROJECT_ROOT}/scripts/check_env.sh" ]; then
+    "${PROJECT_ROOT}/scripts/check_env.sh" local-install
+fi
+
 # 检查发布目录
 if [ ! -d "$RELEASE_DIR" ]; then
     error_exit "找不到发布目录: $RELEASE_DIR"
