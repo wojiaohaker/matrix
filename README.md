@@ -37,7 +37,7 @@ cd matrix
 ./scripts/build.sh
 
 # Install Assets (Modular)
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 *See [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md) for offline/manual installation.*
 

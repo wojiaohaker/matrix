@@ -18,7 +18,7 @@ MATRiX现在支持模块化打包，将模拟器内容分为：
 ### 自动安装（推荐）
 
 ```bash
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 
 ### 手动安装
@@ -34,22 +34,22 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
 
    - **下载资源文件包**（必需）
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/assets-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/assets-0.1.2.tar.gz
      ```
 
    - **下载基础包**（必需）
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/base-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/base-0.1.2.tar.gz
      ```
 
    - **下载共享资源包**（推荐）
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/shared-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/shared-0.1.2.tar.gz
      ```
 
    - **下载地图包**（按需）
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/SceneWorld-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/SceneWorld-0.1.2.tar.gz
      ```
 
 3. **执行本地安装脚本**
@@ -57,18 +57,18 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
    回到项目根目录并运行安装脚本：
    ```bash
    cd ..
-   bash scripts/release_manager/install_chunks_local.sh 0.2.2
+   bash scripts/release_manager/install_chunks_local.sh 0.1.2
    ```
 
 ## 📋 包说明
 
-### 资源文件包 (assets-0.2.2.tar.gz) - 必需
+### 资源文件包 (assets-0.1.2.tar.gz) - 必需
 - **内容**:
   - `bin/sim_launcher`: 模拟器启动器
   - 核心二进制依赖文件
 - **必需**: ✅ 是
 
-### 基础包 (base-0.2.2.tar.gz) - 必需
+### 基础包 (base-0.1.2.tar.gz) - 必需
 - **大小**: ~2.3GB
 - **内容**:
   - EmptyWorld地图
@@ -76,7 +76,7 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
   - Chunk 0 (pakchunk0)
 - **必需**: ✅ 是
 
-### 共享资源包 (shared-0.2.2.tar.gz) - 推荐
+### 共享资源包 (shared-0.1.2.tar.gz) - 推荐
 - **大小**: ~3.3GB
 - **内容**:
   - Fab/Carla共享资源

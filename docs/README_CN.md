@@ -37,7 +37,7 @@ cd matrix
 ./scripts/build.sh
 
 # 安装资源分块包 (模块化安装)
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 *无法访问 GitHub？请参阅 [Chunk Packages 使用指南](CHUNK_PACKAGES_GUIDE_CN.md) 了解离线手动安装方法。*
 

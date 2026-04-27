@@ -327,7 +327,7 @@ check_runtime_env() {
     local runtime_robot
     if runtime_robot="$(robot_to_runtime_name "$ROBOT_ARG")"; then
         if [[ "$runtime_robot" != "custom" ]]; then
-            require_dir "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Content/model/$runtime_robot" "Install base-${VERSION:-0.2.2}.tar.gz or run scripts/release_manager/install_chunks_local.sh."
+            require_dir "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Content/model/$runtime_robot" "Install base-${VERSION:-0.1.2}.tar.gz or run scripts/release_manager/install_chunks_local.sh."
             require_dir "$PROJECT_ROOT/src/robot_mujoco/zsibot_robots/$runtime_robot" "Install assets/base packages so robot model files are available."
         fi
     else

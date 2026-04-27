@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 加载公共函数库
 source "${SCRIPT_DIR}/common.sh"
 
-VERSION="${1:-0.2.2}"
+VERSION="${1:-0.1.2}"
 RELEASE_DIR="${PROJECT_ROOT}/releases"
 TARGET_DIR="${PROJECT_ROOT}/src/UeSim/Linux/zsibot_mujoco_ue"
 PAK_DIR="${TARGET_DIR}/Content/Paks"

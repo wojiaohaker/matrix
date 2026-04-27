@@ -18,7 +18,7 @@ This design allows users to:
 ### Automatic Installation (Recommended)
 
 ```bash
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 
 ### Manual Installation
@@ -34,22 +34,22 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
 
    - **Download Assets Package** (Required)
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/assets-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/assets-0.1.2.tar.gz
      ```
 
    - **Download Base Package** (Required)
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/base-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/base-0.1.2.tar.gz
      ```
 
    - **Download Shared Resources Package** (Recommended)
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/shared-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/shared-0.1.2.tar.gz
      ```
 
    - **Download Map Packages** (On Demand)
      ```bash
-     wget https://github.com/zsibot/matrix/releases/download/v0.2.2/SceneWorld-0.2.2.tar.gz
+     wget https://github.com/zsibot/matrix/releases/download/v0.1.2/SceneWorld-0.1.2.tar.gz
      ```
 
 3. **Run Local Installation Script**
@@ -57,18 +57,18 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
    Return to the project root and run the installation script:
    ```bash
    cd ..
-   bash scripts/release_manager/install_chunks_local.sh 0.2.2
+   bash scripts/release_manager/install_chunks_local.sh 0.1.2
    ```
 
 ## 📋 Package Description
 
-### Assets Package (assets-0.2.2.tar.gz) - Required
+### Assets Package (assets-0.1.2.tar.gz) - Required
 - **Contents**:
   - `bin/sim_launcher`: Simulator launcher
   - Core binary dependencies
 - **Required**: ✅ Yes
 
-### Base Package (base-0.2.2.tar.gz) - Required
+### Base Package (base-0.1.2.tar.gz) - Required
 - **Size**: ~2.3GB
 - **Contents**:
   - EmptyWorld Map
@@ -76,7 +76,7 @@ bash scripts/release_manager/install_chunks.sh 0.2.2
   - Chunk 0 (pakchunk0)
 - **Required**: ✅ Yes
 
-### Shared Resources Package (shared-0.2.2.tar.gz) - Recommended
+### Shared Resources Package (shared-0.1.2.tar.gz) - Recommended
 - **Size**: ~3.3GB
 - **Contents**:
   - Fab/Carla Shared Resources

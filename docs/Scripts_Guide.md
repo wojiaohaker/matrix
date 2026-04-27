@@ -29,12 +29,12 @@ MATRiX provides various scripts to help you build, install, and run the simulato
 
 ```bash
 # 1. On a machine with internet, download packages
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 
 # 2. Copy the releases/ directory to offline machine
 
 # 3. On offline machine, install from local files
-bash scripts/release_manager/install_chunks_local.sh 0.2.2
+bash scripts/release_manager/install_chunks_local.sh 0.1.2
 # → Installs assets package (required) and all other packages from releases/ directory
 ```
 
@@ -42,11 +42,11 @@ bash scripts/release_manager/install_chunks_local.sh 0.2.2
 
 ```bash
 # Option 1: Download and install new maps
-bash scripts/release_manager/install_chunks.sh 0.2.2
+bash scripts/release_manager/install_chunks.sh 0.1.2
 # → Select additional maps to download
 
 # Option 2: If files already in releases/, just install
-bash scripts/release_manager/install_chunks_local.sh 0.2.2
+bash scripts/release_manager/install_chunks_local.sh 0.1.2
 # → Installs assets package (if needed) and all available maps from releases/
 ```
 
@@ -54,7 +54,7 @@ bash scripts/release_manager/install_chunks_local.sh 0.2.2
 
 ```bash
 # Quick reinstall from local releases/ directory
-bash scripts/release_manager/install_chunks_local.sh 0.2.2
+bash scripts/release_manager/install_chunks_local.sh 0.1.2
 # → No download needed, fast installation
 ```
 
@@ -77,9 +77,9 @@ bash scripts/release_manager/install_chunks_local.sh 0.2.2
 ```text
 matrix/
 ├── releases/                    # Downloaded packages (created after install_chunks.sh)
-│   ├── assets-0.2.2.tar.gz     # Assets package (required)
-│   ├── base-0.2.2.tar.gz       # Base package (required)
-│   ├── shared-0.2.2.tar.gz     # Shared resources (recommended)
+│   ├── assets-0.1.2.tar.gz     # Assets package (required)
+│   ├── base-0.1.2.tar.gz       # Base package (required)
+│   ├── shared-0.1.2.tar.gz     # Shared resources (recommended)
 │   └── *.tar.gz                # Map packages (optional)
 │
 └── src/UeSim/Linux/zsibot_mujoco_ue/  # Runtime directory (where packages are installed)
