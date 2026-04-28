@@ -265,7 +265,7 @@ check_ldd_missing() {
             ldd "$binary" 2>/dev/null | awk '/not found/ {print $1}' | sort -u | tr '\n' ' '
     )"
     if [[ -n "$missing" ]]; then
-        log_fail "missing shared libraries for ${binary#$PROJECT_ROOT/}: $missing" "Install system dependencies with scripts/install_deps.sh or reinstall the release assets package."
+        log_fail "missing shared libraries for ${binary#$PROJECT_ROOT/}: $missing" "Run scripts/install_deps.sh; these libraries come from deps/*.deb and are not installed by install_chunks.sh."
     else
         log_ok "shared libraries: ${binary#$PROJECT_ROOT/}"
     fi

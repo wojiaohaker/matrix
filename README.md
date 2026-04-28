@@ -27,20 +27,21 @@ MATRiX is an advanced simulation platform that integrates **MuJoCo**, **Unreal E
 
 ### 2. Installation
 ```bash
-# Install LCM
-sudo apt update && sudo apt install -y cmake-qt-gui gcc g++ libglib2.0-dev python3-pip
-# (Download and install LCM from source: https://github.com/lcm-proj/lcm/releases)
-
-# Clone & Build
+# Clone
 git clone https://github.com/zsibot/matrix.git
 cd matrix
-bash scripts/check_env.sh runtime
-./scripts/build.sh
 
-# Install Assets (Modular)
+# Install system/runtime dependencies, including local deb packages in deps/
+bash scripts/install_deps.sh
+
+# Install release assets (base package, runtime assets, shared resources, and selected maps)
 bash scripts/release_manager/install_chunks.sh 0.1.2
+
+# Verify after dependencies and assets are installed
+bash scripts/check_env.sh runtime
 ```
 *`scripts/run_sim.sh` and `scripts/run_custom_urdf.sh` run runtime environment checks automatically before launch.*
+*If your network hits aria2/wget TLS errors, rerun the chunk installer with `SKIP_ARIA2=1` to force the fallback download path.*
 *See [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md) for offline/manual installation.*
 
 ### 3. Run Simulation

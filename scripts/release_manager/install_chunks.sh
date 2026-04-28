@@ -236,55 +236,55 @@ download_and_extract_stream() {
         download_exit=1  # 标记为失败，继续尝试其他工具
     fi
 
-    # 如果 aria2c 失败或跳过，尝试其他工具
-    if [ $download_exit -ne 0 ]; then
-        if command -v axel &> /dev/null; then
-            log "使用 axel 多线程下载..."
+    # 如果某个下载器失败，继续尝试下一个。部分网络环境下
+    # aria2/wget 会 TLS 握手失败，但 curl 仍可成功。
+    if [ $download_exit -ne 0 ] && command -v axel &> /dev/null; then
+        log "使用 axel 多线程下载..."
 
-            local axel_args=(-n 16 -a)
-            if [ -n "$http_proxy_url" ]; then
-                axel_args+=("--proxy=${http_proxy_url}")
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                axel "${axel_args[@]}" -o "$final_file" "$url"
-            )
-            download_exit=$?
-        elif command -v wget &> /dev/null; then
-            log "使用 wget 下载（支持断点续传）..."
-
-            local wget_args=(--continue --no-verbose --show-progress --progress=bar:force --timeout=30 --tries=3)
-            if [ -n "$http_proxy_url" ]; then
-                wget_args+=(--proxy=on)
-            else
-                wget_args+=(--no-proxy)
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                if [ -n "$http_proxy_url" ]; then
-                    export http_proxy="$http_proxy_url"
-                    export https_proxy="$http_proxy_url"
-                    export HTTP_PROXY="$http_proxy_url"
-                    export HTTPS_PROXY="$http_proxy_url"
-                fi
-                wget "${wget_args[@]}" -O "$final_file" "$url"
-            )
-            download_exit=$?
-        elif command -v curl &> /dev/null; then
-            log "使用 curl 下载（支持断点续传）..."
-            local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
-            if [ -n "$http_proxy_url" ]; then
-                curl_args+=(--proxy "$http_proxy_url")
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                curl "${curl_args[@]}" -o "$final_file" "$url"
-            )
-            download_exit=$?
-        else
-            log "ERROR: 未找到可用的下载工具"
-            return 1
+        local axel_args=(-n 16 -a)
+        if [ -n "$http_proxy_url" ]; then
+            axel_args+=("--proxy=${http_proxy_url}")
         fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            axel "${axel_args[@]}" -o "$final_file" "$url"
+        )
+        download_exit=$?
+    fi
+
+    if [ $download_exit -ne 0 ] && command -v wget &> /dev/null; then
+        log "使用 wget 下载（支持断点续传）..."
+
+        local wget_args=(--continue --no-verbose --show-progress --progress=bar:force --timeout=30 --tries=3)
+        if [ -n "$http_proxy_url" ]; then
+            wget_args+=(--proxy=on)
+        else
+            wget_args+=(--no-proxy)
+        fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            if [ -n "$http_proxy_url" ]; then
+                export http_proxy="$http_proxy_url"
+                export https_proxy="$http_proxy_url"
+                export HTTP_PROXY="$http_proxy_url"
+                export HTTPS_PROXY="$http_proxy_url"
+            fi
+            wget "${wget_args[@]}" -O "$final_file" "$url"
+        )
+        download_exit=$?
+    fi
+
+    if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
+        log "使用 curl 下载（支持断点续传）..."
+        local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        if [ -n "$http_proxy_url" ]; then
+            curl_args+=(--proxy "$http_proxy_url")
+        fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            curl "${curl_args[@]}" -o "$final_file" "$url"
+        )
+        download_exit=$?
     fi
 
     # 重新启用 set -e
@@ -379,51 +379,49 @@ download_file() {
         download_exit=1  # 标记为失败，继续尝试其他工具
     fi
 
-    # 如果 aria2c 失败或跳过，尝试其他工具
-    if [ $download_exit -ne 0 ]; then
-        if command -v axel &> /dev/null; then
-            local axel_args=(-n 16 -a)
-            if [ -n "$http_proxy_url" ]; then
-                axel_args+=("--proxy=${http_proxy_url}")
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                axel "${axel_args[@]}" -o "$output" "$url"
-            )
-            download_exit=$?
-        elif command -v wget &> /dev/null; then
-            local wget_args=(--continue --no-verbose --show-progress --progress=bar:force --timeout=30 --tries=3)
-            if [ -n "$http_proxy_url" ]; then
-                wget_args+=(--proxy=on)
-            else
-                wget_args+=(--no-proxy)
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                if [ -n "$http_proxy_url" ]; then
-                    export http_proxy="$http_proxy_url"
-                    export https_proxy="$http_proxy_url"
-                    export HTTP_PROXY="$http_proxy_url"
-                    export HTTPS_PROXY="$http_proxy_url"
-                fi
-                wget "${wget_args[@]}" -O "$output" "$url"
-            )
-            download_exit=$?
-        elif command -v curl &> /dev/null; then
-            local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
-            if [ -n "$http_proxy_url" ]; then
-                curl_args+=(--proxy "$http_proxy_url")
-            fi
-            (
-                unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
-                curl "${curl_args[@]}" -o "$output" "$url"
-            )
-            download_exit=$?
-        else
-            log "ERROR: 未找到可用的下载工具"
-            set -e
-            return 1
+    # 如果某个下载器失败，继续尝试下一个。
+    if [ $download_exit -ne 0 ] && command -v axel &> /dev/null; then
+        local axel_args=(-n 16 -a)
+        if [ -n "$http_proxy_url" ]; then
+            axel_args+=("--proxy=${http_proxy_url}")
         fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            axel "${axel_args[@]}" -o "$output" "$url"
+        )
+        download_exit=$?
+    fi
+
+    if [ $download_exit -ne 0 ] && command -v wget &> /dev/null; then
+        local wget_args=(--continue --no-verbose --show-progress --progress=bar:force --timeout=30 --tries=3)
+        if [ -n "$http_proxy_url" ]; then
+            wget_args+=(--proxy=on)
+        else
+            wget_args+=(--no-proxy)
+        fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            if [ -n "$http_proxy_url" ]; then
+                export http_proxy="$http_proxy_url"
+                export https_proxy="$http_proxy_url"
+                export HTTP_PROXY="$http_proxy_url"
+                export HTTPS_PROXY="$http_proxy_url"
+            fi
+            wget "${wget_args[@]}" -O "$output" "$url"
+        )
+        download_exit=$?
+    fi
+
+    if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
+        local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        if [ -n "$http_proxy_url" ]; then
+            curl_args+=(--proxy "$http_proxy_url")
+        fi
+        (
+            unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY
+            curl "${curl_args[@]}" -o "$output" "$url"
+        )
+        download_exit=$?
     fi
 
     # 重新启用 set -e
@@ -664,7 +662,7 @@ log_section "[2] 下载并安装资源文件包 (必需)"
     # 从 manifest 读取资源包的大小和 SHA256
     ASSETS_SIZE=""
     ASSETS_SHA256=""
-    ASSETS_REQUIRED=false
+    ASSETS_REQUIRED=true
     if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
         ASSETS_SIZE=$(jq -r '.packages.assets.size // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
         ASSETS_SHA256=$(jq -r '.packages.assets.sha256 // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
