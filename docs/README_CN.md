@@ -13,7 +13,7 @@
 
 </div>
 
-> **最后更新：** 2026-01-06
+> **最后更新：** 2026-04-28
 
 MATRiX 是一个集成了 **MuJoCo**、**Unreal Engine 5** 和 **CARLA** 的高级仿真平台，提供用于四足机器人研究的高保真、交互式环境。其软件在环（software-in-the-loop）架构支持真实物理仿真、沉浸式视觉效果，并优化了仿真到现实的迁移（sim-to-real）以便机器人开发与部署。
 
@@ -34,11 +34,13 @@ sudo apt update && sudo apt install -y cmake-qt-gui gcc g++ libglib2.0-dev pytho
 # 克隆并构建
 git clone https://github.com/zsibot/matrix.git
 cd matrix
+bash scripts/check_env.sh build
 ./scripts/build.sh
 
 # 安装资源分块包 (模块化安装)
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
+*`scripts/run_sim.sh` 和 `scripts/run_custom_urdf.sh` 在启动前会自动执行环境检查，`scripts/release_manager/install_chunks.sh` 在安装资源前也会先检查安装环境。*
 *无法访问 GitHub？请参阅 [Chunk Packages 使用指南](CHUNK_PACKAGES_GUIDE_CN.md) 了解离线手动安装方法。*
 
 ### 3. 运行仿真

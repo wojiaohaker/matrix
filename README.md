@@ -13,7 +13,7 @@
 
 </div>
 
-> **Last Updated:** 2026-01-06
+> **Last Updated:** 2026-04-28
 
 MATRiX is an advanced simulation platform that integrates **MuJoCo**, **Unreal Engine 5**, and **CARLA** to provide high-fidelity, interactive environments for quadruped robot research. Its software-in-the-loop architecture enables realistic physics, immersive visuals, and optimized sim-to-real transfer for robotics development and deployment.
 
@@ -34,11 +34,13 @@ sudo apt update && sudo apt install -y cmake-qt-gui gcc g++ libglib2.0-dev pytho
 # Clone & Build
 git clone https://github.com/zsibot/matrix.git
 cd matrix
+bash scripts/check_env.sh build
 ./scripts/build.sh
 
 # Install Assets (Modular)
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
+*`scripts/run_sim.sh` and `scripts/run_custom_urdf.sh` run environment checks automatically before launch. `scripts/release_manager/install_chunks.sh` also checks the install environment before downloading assets.*
 *See [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md) for offline/manual installation.*
 
 ### 3. Run Simulation
