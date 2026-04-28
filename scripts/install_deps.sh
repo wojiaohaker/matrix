@@ -32,6 +32,36 @@ install_deb_glob() {
     fi
 }
 
+install_optional_apt_packages() {
+    local label="$1"
+    shift
+
+    local available=()
+    local missing=()
+    local pkg
+
+    for pkg in "$@"; do
+        if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
+            echo "Optional package already installed: $pkg"
+        elif apt-cache show "$pkg" >/dev/null 2>&1; then
+            available+=("$pkg")
+        else
+            missing+=("$pkg")
+        fi
+    done
+
+    if [ "${#available[@]}" -gt 0 ]; then
+        sudo apt install "${available[@]}" -y
+    fi
+
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo "WARNING: Skipping optional ${label} packages because they are not available from apt:"
+        printf '  %s\n' "${missing[@]}"
+        echo "         If you need ROS features, configure the ROS 2 Humble apt repository first."
+        echo "         See docs/RoamerX_Lite_Integration.md for ROS 2 Humble setup."
+    fi
+}
+
 sudo apt-get install protobuf-compiler -y
 sudo apt-get install libspdlog-dev -y
 sudo apt install libglfw3-dev libxinerama-dev libxcursor-dev libxi-dev libyaml-cpp-dev -y
@@ -46,7 +76,7 @@ sudo apt install cmake-qt-gui -y
 sudo apt install g++ gcc -y
 sudo apt install libopencv-dev -y
 sudo apt install jq -y
-sudo apt install ros-humble-image-transport ros-humble-image-transport-plugins -y
+install_optional_apt_packages "ROS image transport" ros-humble-image-transport ros-humble-image-transport-plugins
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
