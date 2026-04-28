@@ -9,6 +9,15 @@ cd "$PROJECT_ROOT"
 echo "Installing system dependencies "
 
 DEPS_DIR="deps"
+LOCAL_DEB_TMP_DIR=""
+
+cleanup_local_deb_tmp_dir() {
+    if [ -n "$LOCAL_DEB_TMP_DIR" ]; then
+        rm -rf "$LOCAL_DEB_TMP_DIR"
+    fi
+}
+
+trap cleanup_local_deb_tmp_dir EXIT
 
 if [ ! -d "$DEPS_DIR" ]; then
     echo "ERROR: Dependencies directory not found: $DEPS_DIR"
@@ -19,14 +28,19 @@ install_deb_glob() {
     local matched=0
     local pkg
     local apt_pkg
+    local tmp_pkg
 
     for pkg in "$@"; do
         if [ -f "$pkg" ]; then
-            apt_pkg="$pkg"
-            case "$apt_pkg" in
-                /*|./*|../*) ;;
-                *) apt_pkg="./$apt_pkg" ;;
-            esac
+            if [ -z "$LOCAL_DEB_TMP_DIR" ]; then
+                LOCAL_DEB_TMP_DIR="$(mktemp -d /tmp/matrix-local-debs.XXXXXX)"
+                chmod 755 "$LOCAL_DEB_TMP_DIR"
+            fi
+
+            tmp_pkg="$LOCAL_DEB_TMP_DIR/$(basename "$pkg")"
+            cp -f "$pkg" "$tmp_pkg"
+            chmod 644 "$tmp_pkg"
+            apt_pkg="$tmp_pkg"
             sudo apt install -y "$apt_pkg"
             matched=1
         fi
