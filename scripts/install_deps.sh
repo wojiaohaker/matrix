@@ -18,10 +18,16 @@ fi
 install_deb_glob() {
     local matched=0
     local pkg
+    local apt_pkg
 
     for pkg in "$@"; do
         if [ -f "$pkg" ]; then
-            sudo apt install -y "$pkg"
+            apt_pkg="$pkg"
+            case "$apt_pkg" in
+                /*|./*|../*) ;;
+                *) apt_pkg="./$apt_pkg" ;;
+            esac
+            sudo apt install -y "$apt_pkg"
             matched=1
         fi
     done
