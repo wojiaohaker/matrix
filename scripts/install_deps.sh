@@ -32,35 +32,79 @@ install_deb_glob() {
     fi
 }
 
-install_optional_apt_packages() {
-    local label="$1"
-    shift
+apt_has_package() {
+    apt-cache show "$1" >/dev/null 2>&1
+}
 
-    local available=()
-    local missing=()
-    local pkg
-
-    for pkg in "$@"; do
-        if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
-            echo "Optional package already installed: $pkg"
-        elif apt-cache show "$pkg" >/dev/null 2>&1; then
-            available+=("$pkg")
-        else
-            missing+=("$pkg")
-        fi
-    done
-
-    if [ "${#available[@]}" -gt 0 ]; then
-        sudo apt install "${available[@]}" -y
-    fi
-
-    if [ "${#missing[@]}" -gt 0 ]; then
-        echo "WARNING: Skipping optional ${label} packages because they are not available from apt:"
-        printf '  %s\n' "${missing[@]}"
-        echo "         If you need ROS features, configure the ROS 2 Humble apt repository first."
-        echo "         See docs/RoamerX_Lite_Integration.md for ROS 2 Humble setup."
+remove_partial_robot_forward() {
+    local status
+    status="$(dpkg-query -W -f='${db:Status-Abbrev}' robot-forward 2>/dev/null || true)"
+    if [ -n "$status" ] && [ "$status" != "ii " ]; then
+        echo "Removing partially installed robot-forward package state..."
+        sudo dpkg --remove robot-forward >/dev/null 2>&1 || true
     fi
 }
+
+ensure_ros2_humble_apt_source() {
+    if apt_has_package ros-humble-ros-base; then
+        return 0
+    fi
+
+    echo "ROS 2 Humble apt packages are not available. Configuring ROS 2 apt source..."
+    sudo apt install curl gnupg lsb-release ca-certificates software-properties-common -y
+    sudo add-apt-repository universe -y
+
+    local ubuntu_codename
+    ubuntu_codename="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}")"
+    if [ -z "$ubuntu_codename" ]; then
+        echo "ERROR: Cannot detect Ubuntu codename for ROS 2 apt source."
+        exit 1
+    fi
+
+    local ros_keyring="/usr/share/keyrings/ros-archive-keyring.gpg"
+    local ros_repo_url="${ROS_APT_REPO_URL:-http://packages.ros.org/ros2/ubuntu}"
+    local tmp_key
+    tmp_key="$(mktemp)"
+
+    curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o "$tmp_key"
+    sudo gpg --dearmor -o "$ros_keyring" "$tmp_key"
+    rm -f "$tmp_key"
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=${ros_keyring}] ${ros_repo_url} ${ubuntu_codename} main" \
+        | sudo tee /etc/apt/sources.list.d/ros2.list >/dev/null
+    sudo apt update
+
+    if ! apt_has_package ros-humble-ros-base; then
+        echo "ERROR: ROS 2 Humble packages are still unavailable after adding ${ros_repo_url}."
+        echo "       If you are behind a mirror/proxy, set ROS_APT_REPO_URL to a reachable ROS 2 apt mirror and rerun."
+        exit 1
+    fi
+}
+
+ensure_libstdcpp_for_robot_forward() {
+    local required="13.1"
+    local installed
+    installed="$(dpkg-query -W -f='${Version}' libstdc++6 2>/dev/null || echo "0")"
+
+    if dpkg --compare-versions "$installed" ge "$required"; then
+        return 0
+    fi
+
+    echo "robot-forward requires libstdc++6 >= ${required}; installed version is ${installed}."
+    echo "Configuring ubuntu-toolchain-r/test PPA to install a compatible libstdc++6 runtime..."
+    sudo apt install software-properties-common -y
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    sudo apt update
+    sudo apt install libstdc++6 -y
+
+    installed="$(dpkg-query -W -f='${Version}' libstdc++6 2>/dev/null || echo "0")"
+    if ! dpkg --compare-versions "$installed" ge "$required"; then
+        echo "ERROR: libstdc++6 is still ${installed}; robot-forward requires >= ${required}."
+        exit 1
+    fi
+}
+
+remove_partial_robot_forward
 
 sudo apt-get install protobuf-compiler -y
 sudo apt-get install libspdlog-dev -y
@@ -76,18 +120,20 @@ sudo apt install cmake-qt-gui -y
 sudo apt install g++ gcc -y
 sudo apt install libopencv-dev -y
 sudo apt install jq -y
-install_optional_apt_packages "ROS image transport" ros-humble-image-transport ros-humble-image-transport-plugins
+ensure_ros2_humble_apt_source
+sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins -y
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
 sudo apt install libqt5x11extras5-dev
+ensure_libstdcpp_for_robot_forward
 
 install_deb_glob "$DEPS_DIR"/lcm_*.deb
 install_deb_glob "$DEPS_DIR"/zsibot_common_*.deb
-install_deb_glob "$DEPS_DIR"/robot-forward_*.deb
 install_deb_glob "$DEPS_DIR"/ecal_*.deb
 install_deb_glob "$DEPS_DIR"/mujoco_*.deb
 install_deb_glob "$DEPS_DIR"/onnx_*.deb
+install_deb_glob "$DEPS_DIR"/robot-forward_*.deb
 
 sudo apt install -y qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools \
     qml-module-qtquick-controls qml-module-qtquick-controls2 \
