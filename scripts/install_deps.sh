@@ -46,7 +46,7 @@ sudo apt install cmake-qt-gui -y
 sudo apt install g++ gcc -y
 sudo apt install libopencv-dev -y
 sudo apt install jq -y
-sudo apt install ros-humble-image-transport* -y
+sudo apt install ros-humble-image-transport ros-humble-image-transport-plugins -y
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y

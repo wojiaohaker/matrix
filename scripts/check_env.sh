@@ -421,13 +421,13 @@ check_build_env() {
 }
 
 check_roamerx_env() {
-    echo "[INFO] Checking RoamerX Lite link environment"
+    echo "[INFO] Checking RoamerX link environment"
     check_common_commands
     require_cmd ros2 "Install and source ROS 2 Humble: source /opt/ros/humble/setup.bash"
     require_cmd rviz2 "sudo apt install -y ros-humble-rviz2"
     warn_cmd ss "sudo apt install -y iproute2"
     if [[ ! -f /opt/ros/humble/setup.bash ]]; then
-        log_fail "ROS 2 Humble setup file not found: /opt/ros/humble/setup.bash" "Install ROS 2 Humble and source it before starting RoamerX Lite link."
+        log_fail "ROS 2 Humble setup file not found: /opt/ros/humble/setup.bash" "Install ROS 2 Humble and source it before starting RoamerX link."
     else
         log_ok "ROS 2 Humble: /opt/ros/humble/setup.bash"
     fi

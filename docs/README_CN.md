@@ -34,13 +34,13 @@ sudo apt update && sudo apt install -y cmake-qt-gui gcc g++ libglib2.0-dev pytho
 # 克隆并构建
 git clone https://github.com/zsibot/matrix.git
 cd matrix
-bash scripts/check_env.sh build
+bash scripts/check_env.sh runtime
 ./scripts/build.sh
 
 # 安装资源分块包 (模块化安装)
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
-*`scripts/run_sim.sh` 和 `scripts/run_custom_urdf.sh` 在启动前会自动执行环境检查，`scripts/release_manager/install_chunks.sh` 在安装资源前也会先检查安装环境。*
+*`scripts/run_sim.sh` 和 `scripts/run_custom_urdf.sh` 在启动前会自动执行运行时环境检查。*
 *无法访问 GitHub？请参阅 [Chunk Packages 使用指南](CHUNK_PACKAGES_GUIDE_CN.md) 了解离线手动安装方法。*
 
 ### 3. 运行仿真
@@ -71,7 +71,7 @@ bash scripts/release_manager/install_chunks.sh 0.1.2
 **高级功能**
 - [🌐 多机器人仿真](Multi_Robot_Tutorial.md) - 在同一场景中配置和控制多个机器人
 - [🐳 Docker 使用指南](Docker_Tutorial.md) - 在带 GPU 加速的容器中运行仿真
-- [📡 导航栈集成适配](RoamerX_Lite_Integration.md) - 接入 ZsiBot RoamerX Lite (ROS2 Nav2) 框架
+- [📡 导航栈集成适配](RoamerX_Lite_Integration.md) - 接入 GENISOM RoamerX Open (ROS2 Nav2) 框架
 - [🎥 像素流 (Pixel Streaming)](pixelstreaming_tutorial.md) - 网页端远程实时查看仿真画面
 
 ## 💬 交流社区

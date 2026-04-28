@@ -10,15 +10,31 @@ resolve_workspace() {
     return 0
   fi
 
+  if [ -n "${GENISOM_ROAMERX_OPEN_WORKSPACE:-}" ] && [ -d "${GENISOM_ROAMERX_OPEN_WORKSPACE}" ]; then
+    printf '%s\n' "$(cd "${GENISOM_ROAMERX_OPEN_WORKSPACE}" && pwd)"
+    return 0
+  fi
+
+  if [ -n "${ROAMERX_OPEN_WORKSPACE:-}" ] && [ -d "${ROAMERX_OPEN_WORKSPACE}" ]; then
+    printf '%s\n' "$(cd "${ROAMERX_OPEN_WORKSPACE}" && pwd)"
+    return 0
+  fi
+
   if [ -n "${ROAMERX_LITE_WORKSPACE:-}" ] && [ -d "${ROAMERX_LITE_WORKSPACE}" ]; then
     printf '%s\n' "$(cd "${ROAMERX_LITE_WORKSPACE}" && pwd)"
     return 0
   fi
 
   local candidates=(
+    "${SCRIPT_DIR}/../../genisom_roamerx_open"
+    "${SCRIPT_DIR}/../genisom_roamerx_open"
+    "${SCRIPT_DIR}/../../../genisom_roamerx_open"
     "${SCRIPT_DIR}/../../zsibot_roamerx_lite"
     "${SCRIPT_DIR}/../zsibot_roamerx_lite"
     "${SCRIPT_DIR}/../../../zsibot_roamerx_lite"
+    "${SCRIPT_DIR}/../../zsibot_roamer-x_lite"
+    "${SCRIPT_DIR}/../zsibot_roamer-x_lite"
+    "${SCRIPT_DIR}/../../../zsibot_roamer-x_lite"
   )
 
   local candidate
@@ -90,8 +106,8 @@ resolve_forward_install() {
 }
 
 WORKSPACE_DIR="$(resolve_workspace "${1:-}" )" || {
-  echo "[ERROR] RoamerX Lite workspace not found."
-  echo "        Put zsibot_roamerx_lite beside matrix_clean or export ROAMERX_LITE_WORKSPACE."
+  echo "[ERROR] GENISOM RoamerX Open workspace not found."
+  echo "        Put genisom_roamerx_open beside matrix or export GENISOM_ROAMERX_OPEN_WORKSPACE."
   exit 1
 }
 
@@ -209,7 +225,7 @@ cleanup_linked_stack() {
     echo "[WARN] stop_navigation.sh not found or not executable: ${STOP_NAV_SCRIPT}" >&2
   fi
 
-  echo "[INFO] RoamerX Lite linked stack stopped."
+  echo "[INFO] RoamerX linked stack stopped."
 
   # Give Zenoh/ROS graph a moment to withdraw stale endpoints before the next start.
   sleep 2
@@ -232,7 +248,7 @@ start_linked_stack() {
   mkdir -p "${LOG_DIR}"
   rm -f "${STATE_FILE}"
 
-  echo "[INFO] RoamerX Lite workspace: ${WORKSPACE_DIR}"
+  echo "[INFO] RoamerX workspace: ${WORKSPACE_DIR}"
   echo "[INFO] Stop script: ${STOP_NAV_SCRIPT}"
   echo "[INFO] State file: ${STATE_FILE}"
 
@@ -249,7 +265,7 @@ start_linked_stack() {
   if ! is_running "ros2 launch pub_tf pub_tf.launch.py"; then
     if [ ! -f "${PUBTF_SETUP}" ]; then
       echo "[ERROR] pub_tf setup not found: ${PUBTF_SETUP}"
-      echo "[ERROR] Please ensure pub_tf is built in the RoamerX Lite workspace."
+      echo "[ERROR] Please ensure pub_tf is built in the RoamerX workspace."
       return 1
     fi
     pubtf_pid="$(start_background "pub_tf" "${LOG_DIR}/roamerx_pub_tf.log" \
@@ -315,25 +331,25 @@ case "${2:-toggle}" in
   start)
     echo "[INFO] run_roamerx_lite_link.sh invoked with workspace=${WORKSPACE_DIR} mode=start"
     if is_link_running; then
-      echo ">>> RoamerX Lite linked stack already running, keeping it alive."
+      echo ">>> RoamerX linked stack already running, keeping it alive."
     else
-      echo ">>> Starting RoamerX Lite linked stack..."
+      echo ">>> Starting RoamerX linked stack..."
       start_linked_stack
     fi
     ;;
   toggle)
     echo "[INFO] run_roamerx_lite_link.sh invoked with workspace=${WORKSPACE_DIR} mode=toggle"
     if is_link_running; then
-      echo ">>> RoamerX Lite linked stack already running (state file present), stopping..."
+      echo ">>> RoamerX linked stack already running (state file present), stopping..."
       stop_linked_stack
     else
-      echo ">>> Starting RoamerX Lite linked stack..."
+      echo ">>> Starting RoamerX linked stack..."
       start_linked_stack
     fi
     ;;
   stop)
     echo "[INFO] run_roamerx_lite_link.sh invoked with workspace=${WORKSPACE_DIR} mode=stop"
-    echo ">>> Stopping RoamerX Lite linked stack..."
+    echo ">>> Stopping RoamerX linked stack..."
     stop_linked_stack
     ;;
   print)
@@ -342,12 +358,12 @@ case "${2:-toggle}" in
 # Terminal 0: matrix simulation first
 cd matrix_clean/bin && ./sim_launcher
 
-# Terminal 1: linked RoamerX Lite stack
+# Terminal 1: linked RoamerX stack
 bash scripts/run_roamerx_lite_link.sh "${WORKSPACE_DIR}"
 EOF
     ;;
   *)
-    echo "Usage: $0 <roamerx_lite_workspace> [toggle|start|stop|print]"
+    echo "Usage: $0 <roamerx_workspace> [toggle|start|stop|print]"
     exit 1
     ;;
 esac

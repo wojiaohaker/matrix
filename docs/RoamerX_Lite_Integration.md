@@ -1,4 +1,4 @@
-# ZsiBot RoamerX Lite
+# GENISOM RoamerX Open
 
 <div align="center">
 <img src="https://img.shields.io/badge/ROS2-Humble-blue" alt="ROS2 Humble">
@@ -7,7 +7,7 @@
 <img src="https://img.shields.io/badge/Language-C++-red" alt="Language">
 </div>
 
-**Open-source navigation stack for ZsiBot robots. Enables intelligent SLAM, path planning and autonomous movement. Free community version (Lite). Contributions welcome!**
+**Open-source navigation stack for GENISOM-AI robots. Enables intelligent SLAM, path planning and autonomous movement. Free community version (Open). Contributions welcome!**
 
 ## 🚀 Features
 
@@ -69,8 +69,8 @@ sudo apt install ros-humble-desktop
 
 ```bash
 # Clone the repository
-git clone https://github.com/zsibot/zsibot_roamer-x_lite.git
-cd zsibot_roamerx_lite
+git clone https://github.com/zsibot/genisom_roamerx_open.git
+cd genisom_roamerx_open
 
 # Install all dependencies
 chmod +x script/dep/install_all.sh
@@ -102,12 +102,12 @@ source install/setup.bash
 
 ### Layout Requirement for the Launcher Button
 
-If you want to start RoamerX Lite directly from the MATRiX launcher button, keep the two repositories at the same directory level:
+If you want to start RoamerX Open directly from the MATRiX launcher button, keep the two repositories at the same directory level:
 
 ```text
 <workspace>/
   matrix/
-  zsibot_roamerx_lite/
+  genisom_roamerx_open/
 ```
 
 For example:
@@ -115,10 +115,10 @@ For example:
 ```text
 /home/user/work/workspace/
   matrix/
-  zsibot_roamerx_lite/
+  genisom_roamerx_open/
 ```
 
-The launcher-side RoamerX Lite integration resolves the workspace from this sibling layout by default. If `zsibot_roamerx_lite` is placed elsewhere, the launcher button will not be able to find the linked-stack startup script/workspace automatically.
+The launcher-side RoamerX integration resolves `genisom_roamerx_open` from this sibling layout by default. If it is placed elsewhere, export `GENISOM_ROAMERX_OPEN_WORKSPACE=/path/to/genisom_roamerx_open` before starting the launcher.
 
 1. **Launch MATRiX simulation first (provides odom for UE navigation):**
 ```bash
@@ -148,7 +148,7 @@ cd matrix/
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 export ROS_DOMAIN_ID=89
 export SDK_CLIENT_IP=127.0.0.1
-cd /workspace/zsibot_roamerx_lite
+cd /workspace/genisom_roamerx_open
 bash script/bash/start_navigation.sh nav
 
 # Terminal 2
@@ -156,7 +156,7 @@ bash script/bash/start_navigation.sh nav
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 export ROS_DOMAIN_ID=89
 export SDK_CLIENT_IP=127.0.0.1
-cd /workspace/zsibot_roamerx_lite
+cd /workspace/genisom_roamerx_open
 bash script/bash/start_navigation.sh rviz
 ```
 
@@ -248,7 +248,7 @@ TODO
 
 ## 🏗️ Architecture Overview
 
-The ZsiBot RoamerX Lite stack is organized into three main modules:
+The GENISOM RoamerX Open stack is organized into three main modules:
 
 ### 📡 Interface Module (`src/interface/`)
 - **mc_sdk_rosmsgs**: Motion controller SDK message definitions
@@ -501,7 +501,7 @@ We welcome contributions from the community! Here's how to get involved:
 
 ### Reporting Issues
 
-Please use [GitHub Issues](https://github.com/your-org/zsibot_RoamerX_Lite/issues) to report bugs or request features.
+Please use [GitHub Issues](https://github.com/zsibot/genisom_roamerx_open/issues) to report bugs or request features.
 
 Include:
 - Operating system and ROS2 version

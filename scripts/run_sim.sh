@@ -437,7 +437,7 @@ if $ENABLE_MC; then
         if [[ -f "${SDK_CONFIG_FILE}" ]]; then
             sed -i "s/^target_ip: .*/target_ip: \"${ROAMERX_TARGET_IP}\"/" "${SDK_CONFIG_FILE}"
         fi
-        echo "[INFO] RoamerX Lite link detected, starting MC with UDP target ${ROAMERX_TARGET_IP}:43988 and highlevel port 43997"
+        echo "[INFO] RoamerX link detected, starting MC with UDP target ${ROAMERX_TARGET_IP}:43988 and highlevel port 43997"
         ./run_mc.sh r 25001 25002 43988 43997 25005 > run_mc.log 2>&1 &
     else
         ./run_mc.sh r mc_enable=true > run_mc.log 2>&1 &

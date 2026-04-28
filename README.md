@@ -34,13 +34,13 @@ sudo apt update && sudo apt install -y cmake-qt-gui gcc g++ libglib2.0-dev pytho
 # Clone & Build
 git clone https://github.com/zsibot/matrix.git
 cd matrix
-bash scripts/check_env.sh build
+bash scripts/check_env.sh runtime
 ./scripts/build.sh
 
 # Install Assets (Modular)
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
-*`scripts/run_sim.sh` and `scripts/run_custom_urdf.sh` run environment checks automatically before launch. `scripts/release_manager/install_chunks.sh` also checks the install environment before downloading assets.*
+*`scripts/run_sim.sh` and `scripts/run_custom_urdf.sh` run runtime environment checks automatically before launch.*
 *See [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md) for offline/manual installation.*
 
 ### 3. Run Simulation
@@ -71,7 +71,7 @@ To keep this README concise, detailed guides have been organized into the `docs/
 **Advanced Features**
 - [🌐 Multi-Robot Tutorial](docs/Multi_Robot_Tutorial.md) - Simulating multiple robots simultaneously
 - [🐳 Docker Tutorial](docs/Docker_Tutorial.md) - Running MATRiX in a container
-- [📡 RoamerX Lite Integration](docs/RoamerX_Lite_Integration.md) - ROS2 Nav2 stack integration
+- [📡 RoamerX Open Integration](docs/RoamerX_Lite_Integration.md) - ROS2 Nav2 stack integration
 - [🎥 Pixel Streaming](docs/pixelstreaming_tutorial.md) - Web browser streaming
 
 ## 💬 Community
