@@ -21,7 +21,7 @@ install_deb_glob() {
 
     for pkg in "$@"; do
         if [ -f "$pkg" ]; then
-            sudo dpkg -i "$pkg"
+            sudo apt install -y "$pkg"
             matched=1
         fi
     done
@@ -81,29 +81,6 @@ ensure_ros2_humble_apt_source() {
     fi
 }
 
-ensure_libstdcpp_for_robot_forward() {
-    local required="13.1"
-    local installed
-    installed="$(dpkg-query -W -f='${Version}' libstdc++6 2>/dev/null || echo "0")"
-
-    if dpkg --compare-versions "$installed" ge "$required"; then
-        return 0
-    fi
-
-    echo "robot-forward requires libstdc++6 >= ${required}; installed version is ${installed}."
-    echo "Configuring ubuntu-toolchain-r/test PPA to install a compatible libstdc++6 runtime..."
-    sudo apt install software-properties-common -y
-    sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-    sudo apt update
-    sudo apt install libstdc++6 -y
-
-    installed="$(dpkg-query -W -f='${Version}' libstdc++6 2>/dev/null || echo "0")"
-    if ! dpkg --compare-versions "$installed" ge "$required"; then
-        echo "ERROR: libstdc++6 is still ${installed}; robot-forward requires >= ${required}."
-        exit 1
-    fi
-}
-
 remove_partial_robot_forward
 
 sudo apt-get install protobuf-compiler -y
@@ -120,13 +97,13 @@ sudo apt install cmake-qt-gui -y
 sudo apt install g++ gcc -y
 sudo apt install libopencv-dev -y
 sudo apt install jq -y
+sudo apt install libpcl-common1.12 -y
 ensure_ros2_humble_apt_source
 sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins -y
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
-sudo apt install libqt5x11extras5-dev
-ensure_libstdcpp_for_robot_forward
+sudo apt install libqt5x11extras5-dev -y
 
 install_deb_glob "$DEPS_DIR"/lcm_*.deb
 install_deb_glob "$DEPS_DIR"/zsibot_common_*.deb

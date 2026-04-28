@@ -31,7 +31,8 @@ MATRiX is an advanced simulation platform that integrates **MuJoCo**, **Unreal E
 git clone https://github.com/zsibot/matrix.git
 cd matrix
 
-# Install system/runtime dependencies, including local deb packages in deps/
+# Install system/runtime dependencies, including required local deb packages in deps/.
+# The script configures the ROS 2 Humble apt source automatically if it is missing.
 bash scripts/install_deps.sh
 
 # Install release assets (base package, runtime assets, shared resources, and selected maps)
@@ -41,6 +42,7 @@ bash scripts/release_manager/install_chunks.sh 0.1.2
 bash scripts/check_env.sh runtime
 ```
 *`scripts/run_sim.sh` and `scripts/run_custom_urdf.sh` run runtime environment checks automatically before launch.*
+*If the ROS apt source is blocked, rerun with `ROS_APT_REPO_URL=<reachable-ros2-apt-mirror> bash scripts/install_deps.sh`.*
 *If your network hits aria2/wget TLS errors, rerun the chunk installer with `SKIP_ARIA2=1` to force the fallback download path.*
 *See [Chunk Packages Guide](docs/CHUNK_PACKAGES_GUIDE.md) for offline/manual installation.*
 
