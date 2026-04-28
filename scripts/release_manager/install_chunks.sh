@@ -147,6 +147,19 @@ verify_file_integrity() {
     return 0
 }
 
+manifest_has_expected_schema() {
+    local manifest_file="$1"
+
+    jq -e '
+        .version
+        and .packages.base.file
+        and .packages.assets.file
+        and .packages.shared.file
+        and (.packages.maps | type == "array")
+        and (.packages.maps | length > 0)
+    ' "$manifest_file" >/dev/null 2>&1
+}
+
 # 流式下载并解压（边下载边解压）
 # 注意：为了显示下载进度，改为先下载到临时文件再解压
 download_and_extract_stream() {
@@ -276,7 +289,7 @@ download_and_extract_stream() {
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
         log "使用 curl 下载（支持断点续传）..."
-        local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
         if [ -n "$http_proxy_url" ]; then
             curl_args+=(--proxy "$http_proxy_url")
         fi
@@ -413,7 +426,7 @@ download_file() {
     fi
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
-        local curl_args=(-L --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
         if [ -n "$http_proxy_url" ]; then
             curl_args+=(--proxy "$http_proxy_url")
         fi
@@ -472,11 +485,11 @@ manifest_valid=false
 if [ -f "$MANIFEST_FILE" ]; then
     # 验证是否是有效的 JSON
     if command -v jq &> /dev/null; then
-        if jq empty "$MANIFEST_FILE" 2>/dev/null; then
+        if jq empty "$MANIFEST_FILE" 2>/dev/null && manifest_has_expected_schema "$MANIFEST_FILE"; then
             manifest_valid=true
             log "✓ manifest 文件已存在且有效"
         else
-            log "⚠️  现有 manifest 文件无效，重新下载..."
+            log "⚠️  现有 manifest 文件无效或结构不完整，重新下载..."
             rm -f "$MANIFEST_FILE"
         fi
     else
@@ -497,11 +510,11 @@ if [ "$manifest_valid" = false ]; then
     if download_file "$MANIFEST_URL" "$MANIFEST_FILE"; then
         # 验证下载的文件是否有效
         if command -v jq &> /dev/null; then
-            if jq empty "$MANIFEST_FILE" 2>/dev/null; then
+            if jq empty "$MANIFEST_FILE" 2>/dev/null && manifest_has_expected_schema "$MANIFEST_FILE"; then
                 log "✓ manifest 文件下载成功并验证通过"
                 manifest_valid=true
             else
-                log "⚠️  下载的 manifest 文件无效（不是有效的 JSON）"
+                log "⚠️  下载的 manifest 文件无效或结构不完整"
                 rm -f "$MANIFEST_FILE"
             fi
         else
@@ -544,7 +557,7 @@ if [ "$manifest_valid" = true ] && [ -f "$MANIFEST_FILE" ] && command -v jq &> /
         echo "可用地图包:"
         map_index=0
         ordered_maps=("CustomWorld" "SceneWorld" "Town10World" "YardWorld" "CrowdWorld" "VeniceWorld" "HouseWorld" "RunningWorld" "Town10Zombie" "IROSFlatWorld" "IROSSlopedWorld" "IROSFlatWorld2025" "IROSSloppedWorld2025" "OfficeWorld" "3DGSWorld" "MoonWorld")
-        manifest_map_names=$(jq -r '.packages.maps[].name' "$MANIFEST_FILE" 2>/dev/null)
+        manifest_map_names=$(jq -r '.packages.maps[]?.name // empty' "$MANIFEST_FILE" 2>/dev/null)
         declare -A processed_maps
         show_map_info() {
             local m_name=$1
@@ -664,9 +677,14 @@ log_section "[2] 下载并安装资源文件包 (必需)"
     ASSETS_SHA256=""
     ASSETS_REQUIRED=true
     if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
+        ASSETS_FILE=$(jq -r '.packages.assets.file // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
+        if [ -z "$ASSETS_FILE" ]; then
+            ASSETS_FILE="assets-${VERSION}.tar.gz"
+        fi
+        ASSETS_URL="${GITHUB_RELEASE_URL}/${ASSETS_FILE}"
         ASSETS_SIZE=$(jq -r '.packages.assets.size // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
         ASSETS_SHA256=$(jq -r '.packages.assets.sha256 // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
-        ASSETS_REQUIRED=$(jq -r '.packages.assets.required // false' "$MANIFEST_FILE" 2>/dev/null || echo "false")
+        ASSETS_REQUIRED=$(jq -r '.packages.assets.required // true' "$MANIFEST_FILE" 2>/dev/null || echo "true")
     fi
 
     # 检查资源文件是否已安装（sim_launcher 包装脚本很小，优先检查 .bin）
@@ -718,7 +736,12 @@ log_section "[2] 下载并安装资源文件包 (必需)"
                 fi
             fi
         else
-            log "⚠️  manifest 中未找到资源包信息，跳过"
+            log "⚠️  manifest 中未找到资源包信息，按默认资源文件包继续下载"
+            if download_and_extract_stream "$ASSETS_URL" "${PROJECT_ROOT}" "资源文件包" "$ASSETS_SIZE" "$ASSETS_SHA256"; then
+                log "✓ 资源文件包安装完成"
+            else
+                error_exit "资源文件包下载失败（必需），请检查网络连接和版本号"
+            fi
         fi
     fi
 }
@@ -732,6 +755,11 @@ log_section "[3] 下载并安装基础包 (必需)"
     BASE_SIZE=""
     BASE_SHA256=""
     if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
+        BASE_FILE_FROM_MANIFEST=$(jq -r '.packages.base.file // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
+        if [ -n "$BASE_FILE_FROM_MANIFEST" ]; then
+            BASE_FILE="$BASE_FILE_FROM_MANIFEST"
+            BASE_URL="${GITHUB_RELEASE_URL}/${BASE_FILE}"
+        fi
         BASE_SIZE=$(jq -r '.packages.base.size // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
         BASE_SHA256=$(jq -r '.packages.base.sha256 // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
     fi
@@ -790,6 +818,11 @@ if [ "$DOWNLOAD_SHARED" = true ]; then
         SHARED_SHA256=""
         SHARED_IS_SPLIT=false
         if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
+            SHARED_FILE_FROM_MANIFEST=$(jq -r '.packages.shared.file // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
+            if [ -n "$SHARED_FILE_FROM_MANIFEST" ]; then
+                SHARED_FILE="$SHARED_FILE_FROM_MANIFEST"
+                SHARED_URL="${GITHUB_RELEASE_URL}/${SHARED_FILE}"
+            fi
             SHARED_SIZE=$(jq -r '.packages.shared.size // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
             SHARED_SHA256=$(jq -r '.packages.shared.sha256 // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
             SHARED_IS_SPLIT=$(jq -r '.packages.shared.is_split // false' "$MANIFEST_FILE" 2>/dev/null || echo "false")
@@ -889,9 +922,15 @@ if [ ${#SELECTED_MAPS[@]} -gt 0 ]; then
         local map_sha256=""
         local is_split=false
         if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
-            map_size=$(jq -r ".packages.maps[] | select(.name==\"$map_name\") | .size // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
-            map_sha256=$(jq -r ".packages.maps[] | select(.name==\"$map_name\") | .sha256 // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
-            is_split=$(jq -r ".packages.maps[] | select(.name==\"$map_name\") | .is_split // false" "$MANIFEST_FILE" 2>/dev/null || echo "false")
+            local map_file_from_manifest
+            map_file_from_manifest=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .file // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
+            if [ -n "$map_file_from_manifest" ]; then
+                map_file="$map_file_from_manifest"
+                map_url="${GITHUB_RELEASE_URL}/${map_file}"
+            fi
+            map_size=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .size // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
+            map_sha256=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .sha256 // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
+            is_split=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .is_split // false" "$MANIFEST_FILE" 2>/dev/null || echo "false")
         fi
 
         # 检查是否已下载
