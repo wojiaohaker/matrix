@@ -130,6 +130,8 @@ ue_runtime_library_path() {
 ros_runtime_library_path() {
     join_existing_dirs \
         "/opt/ros/humble/lib" \
+        "/opt/ros/humble/lib/x86_64-linux-gnu" \
+        "$PROJECT_ROOT/src/robot_mujoco/simulate/build" \
         "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux"
 }
 
@@ -283,13 +285,25 @@ check_ldd_missing() {
         return 0
     fi
 
+    local ldd_output
     local missing
-    missing="$(
+    local version_errors
+
+    ldd_output="$(
         LD_LIBRARY_PATH="${extra_ld_path}${extra_ld_path:+:}${LD_LIBRARY_PATH:-}" \
-            ldd "$binary" 2>/dev/null | awk '/not found/ {print $1}' | sort -u | tr '\n' ' '
+            ldd "$binary" 2>&1 || true
+    )"
+    missing="$(
+        printf '%s\n' "$ldd_output" | awk '/=>[[:space:]]+not found/ {print $1}' | sort -u | tr '\n' ' '
+    )"
+    version_errors="$(
+        printf '%s\n' "$ldd_output" | grep -E "version .+ not found" || true
     )"
     if [[ -n "$missing" ]]; then
         log_fail "missing shared libraries for ${binary#$PROJECT_ROOT/}: $missing" "Run scripts/install_deps.sh; these libraries come from deps/*.deb and are not installed by install_chunks.sh."
+    elif [[ -n "$version_errors" ]]; then
+        log_fail "incompatible shared library versions for ${binary#$PROJECT_ROOT/}" "Run scripts/install_deps.sh and make sure the release deps/assets match this Ubuntu version."
+        printf '%s\n' "$version_errors" | sed "s#${PROJECT_ROOT}/##g; s/^/       ldd: /" >&2
     else
         log_ok "shared libraries: ${binary#$PROJECT_ROOT/}"
     fi
