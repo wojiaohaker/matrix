@@ -687,21 +687,63 @@ log_section "[2] 下载并安装资源文件包 (必需)"
         ASSETS_REQUIRED=$(jq -r '.packages.assets.required // true' "$MANIFEST_FILE" 2>/dev/null || echo "true")
     fi
 
-    # 检查资源文件是否已安装（sim_launcher 包装脚本很小，优先检查 .bin）
-    ASSETS_INSTALLED=false
-    if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ] || [ -f "${PROJECT_ROOT}/bin/sim_launcher" ]; then
-        launcher_file="${PROJECT_ROOT}/bin/sim_launcher.bin"
-        if [ ! -f "$launcher_file" ]; then launcher_file="${PROJECT_ROOT}/bin/sim_launcher"; fi
+    ASSETS_RUNTIME_FILES=(
+        "src/UeSim/Linux/Engine/Binaries/Linux/libEOSSDK-Linux-Shipping.so"
+        "src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux/libopencv_world.so.405"
+        "src/robot_mujoco/simulate/build/robot_mujoco"
+    )
+
+    assets_launcher_ok() {
+        local launcher_file="${PROJECT_ROOT}/bin/sim_launcher.bin"
+        local launcher_size
+        local bin_size
+
+        if [ ! -f "$launcher_file" ]; then
+            launcher_file="${PROJECT_ROOT}/bin/sim_launcher"
+        fi
+        if [ ! -f "$launcher_file" ]; then
+            return 1
+        fi
 
         launcher_size=$(stat -f%z "$launcher_file" 2>/dev/null || stat -c%s "$launcher_file" 2>/dev/null || echo 0)
         if [ "$launcher_size" -gt 1000000 ]; then
-            ASSETS_INSTALLED=true
-        elif [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
+            return 0
+        fi
+
+        if [ -f "${PROJECT_ROOT}/bin/sim_launcher.bin" ]; then
             bin_size=$(stat -f%z "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || stat -c%s "${PROJECT_ROOT}/bin/sim_launcher.bin" 2>/dev/null || echo 0)
             if [ "$bin_size" -gt 1000000 ]; then
-                ASSETS_INSTALLED=true
+                return 0
             fi
         fi
+
+        return 1
+    }
+
+    assets_runtime_files_ok() {
+        local all_ok=true
+        local relative_path
+
+        for relative_path in "${ASSETS_RUNTIME_FILES[@]}"; do
+            if [ ! -f "${PROJECT_ROOT}/${relative_path}" ]; then
+                log "⚠️  资源运行时文件缺失: ${relative_path}"
+                all_ok=false
+            fi
+        done
+
+        [ "$all_ok" = true ]
+    }
+
+    assets_installation_ok() {
+        assets_launcher_ok && assets_runtime_files_ok
+    }
+
+    # 检查资源文件是否已安装（sim_launcher 包装脚本很小，优先检查 .bin）
+    ASSETS_INSTALLED=false
+    if assets_installation_ok; then
+        ASSETS_INSTALLED=true
+    elif assets_launcher_ok; then
+        log "⚠️  资源文件不完整，将重新安装 assets 包"
     fi
 
     if [ "$ASSETS_INSTALLED" = true ]; then
@@ -711,7 +753,13 @@ log_section "[2] 下载并安装资源文件包 (必需)"
         if verify_file_integrity "${DOWNLOAD_DIR}/${ASSETS_FILE}" "$ASSETS_SIZE" "$ASSETS_SHA256"; then
             log "✓ 资源文件包已下载且完整，跳过下载，直接解压..."
             if extract_tar "${DOWNLOAD_DIR}/${ASSETS_FILE}" "${PROJECT_ROOT}"; then
-                log "✓ 资源文件包安装完成"
+                if assets_installation_ok; then
+                    ASSETS_INSTALLED=true
+                    log "✓ 资源文件包安装完成"
+                else
+                    log "⚠️  已下载的资源文件包解压后仍不完整，重新下载..."
+                    rm -f "${DOWNLOAD_DIR}/${ASSETS_FILE}"
+                fi
             else
                 error_exit "资源文件包解压失败"
             fi
@@ -727,7 +775,12 @@ log_section "[2] 下载并安装资源文件包 (必需)"
         if [ "$ASSETS_REQUIRED" = "true" ] || [ -n "$ASSETS_SHA256" ]; then
             log "开始下载资源文件包..."
             if download_and_extract_stream "$ASSETS_URL" "${PROJECT_ROOT}" "资源文件包" "$ASSETS_SIZE" "$ASSETS_SHA256"; then
-                log "✓ 资源文件包安装完成"
+                if assets_installation_ok; then
+                    ASSETS_INSTALLED=true
+                    log "✓ 资源文件包安装完成"
+                else
+                    error_exit "资源文件包安装后缺少关键运行时文件，请删除 releases/${ASSETS_FILE} 后重试"
+                fi
             else
                 if [ "$ASSETS_REQUIRED" = "true" ]; then
                     error_exit "资源文件包下载失败（必需），请检查网络连接和版本号"
@@ -738,7 +791,12 @@ log_section "[2] 下载并安装资源文件包 (必需)"
         else
             log "⚠️  manifest 中未找到资源包信息，按默认资源文件包继续下载"
             if download_and_extract_stream "$ASSETS_URL" "${PROJECT_ROOT}" "资源文件包" "$ASSETS_SIZE" "$ASSETS_SHA256"; then
-                log "✓ 资源文件包安装完成"
+                if assets_installation_ok; then
+                    ASSETS_INSTALLED=true
+                    log "✓ 资源文件包安装完成"
+                else
+                    error_exit "资源文件包安装后缺少关键运行时文件，请删除 releases/${ASSETS_FILE} 后重试"
+                fi
             else
                 error_exit "资源文件包下载失败（必需），请检查网络连接和版本号"
             fi
