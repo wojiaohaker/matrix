@@ -475,9 +475,10 @@ sleep 7
 cd ../../robot_mc
 if $ENABLE_MC; then
     echo "[INFO] Starting MC"
+    export SDK_CLIENT_IP="${SDK_CLIENT_IP:-127.0.0.1}"
     ROAMERX_STATE_FILE="${PROJECT_ROOT}/bin/roamerx_link.state"
     if [[ -f "${ROAMERX_STATE_FILE}" ]]; then
-        ROAMERX_TARGET_IP="${SDK_CLIENT_IP:-127.0.0.1}"
+        ROAMERX_TARGET_IP="${SDK_CLIENT_IP}"
         SDK_CONFIG_FILE="${PWD}/build/export/config/sdk_config.yaml"
         if [[ -f "${SDK_CONFIG_FILE}" ]]; then
             sed -i "s/^target_ip: .*/target_ip: \"${ROAMERX_TARGET_IP}\"/" "${SDK_CONFIG_FILE}"

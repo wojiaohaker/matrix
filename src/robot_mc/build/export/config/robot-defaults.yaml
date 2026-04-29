@@ -4,6 +4,8 @@ __collection-name__: robot-parameters
 controller_dt     : 0.002
 control_mode      : 0
 motion_mode       : 0
+cur_control_mode      : 0
+cur_motion_mode       : 0
 debugMode : 0 #0 release #1 debug
 foot_height_sensor_noise      :  0.001
 foot_process_noise_position   :  0.002
