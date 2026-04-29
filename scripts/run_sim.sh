@@ -250,11 +250,9 @@ RUNTIME_ROBOTTYPE="xgb"
 # MUJOCORUNNING is 1 config/config.json中"mujoco_running": true，否则为 false
 if [[ "$MUJOCORUNNING" == "1" ]]; then
     ENABLE_MUJOCO=true
-    sed -i "s/\"mujoco_running\": .*/\"mujoco_running\": true,/" config/config.json
     echo "[INFO] MuJoCo will be enabled. Please ensure you have the proper license and setup."
 else
     ENABLE_MUJOCO=false
-    sed -i "s/\"mujoco_running\": .*/\"mujoco_running\": false,/" config/config.json
     echo "[INFO] MuJoCo will be disabled. The simulation will run without physics-based dynamics."
 fi
 
@@ -379,8 +377,26 @@ sed -i "s/^robot: .*/robot: \"$ROBOTTYPE\"/" src/robot_mujoco/simulate/config.ya
 #######################################
 # JSON 同步
 #######################################
-jq ".robot.robot_type=\"$ROBOTTYPE\" | .robot.weapon=\"$WEAPON\"" \
-    config/config.json > /tmp/config.json && mv /tmp/config.json config/config.json
+MUJOCO_RUNNING_JSON=false
+if $ENABLE_MUJOCO; then
+    MUJOCO_RUNNING_JSON=true
+fi
+
+CONFIG_TMP="$(mktemp)"
+jq \
+    --arg robot_type "$ROBOTTYPE" \
+    --arg weapon "$WEAPON" \
+    --argjson mujoco_running "$MUJOCO_RUNNING_JSON" \
+    '
+    .robot = (.robot // {})
+    | .robot.robot_type = $robot_type
+    | .robot.weapon = $weapon
+    | .robot.mujoco_running = $mujoco_running
+    | .robot.state_port = (.robot.state_port // 25001)
+    | .robot.cmd_port = (.robot.cmd_port // 25002)
+    | .robot.EgoView = (.robot.EgoView // true)
+    | .robot.position = (.robot.position // {"x": 0, "y": 0, "z": 0})
+    ' config/config.json > "$CONFIG_TMP" && mv "$CONFIG_TMP" config/config.json
 
 mkdir -p src/UeSim/Linux/zsibot_mujoco_ue/Content/model/config
 mkdir -p src/UeSim/Linux/zsibot_mujoco_ue/Content/model/SceneLoder
