@@ -19,6 +19,36 @@ CUSTOM_NAME="${7:-}"
 SIM_LAUNCHER_ROOT="${SIM_LAUNCHER_ROOT:-$PROJECT_ROOT}"
 CUSTOM_WRAPPER="$SIM_LAUNCHER_ROOT/scripts/run_custom_urdf.sh"
 
+prepend_ld_library_path() {
+    local dir
+    for dir in "$@"; do
+        if [[ -d "$dir" ]]; then
+            case ":${LD_LIBRARY_PATH:-}:" in
+                *":$dir:"*) ;;
+                *) export LD_LIBRARY_PATH="$dir${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ;;
+            esac
+        fi
+    done
+}
+
+setup_runtime_environment() {
+    if [[ -f /opt/ros/humble/setup.bash ]]; then
+        set +u
+        # shellcheck disable=SC1091
+        source /opt/ros/humble/setup.bash
+        set -u
+    fi
+
+    prepend_ld_library_path \
+        "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux" \
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Binaries/Linux" \
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux" \
+        "$PROJECT_ROOT/src/robot_mujoco/simulate/build" \
+        "/opt/ros/humble/lib"
+}
+
+setup_runtime_environment
+
 if [[ "${SIM_LAUNCHER_SKIP_CUSTOM_URDF_WRAPPER:-0}" != "1" ]] && [[ "$ROBOT_ARG" == "custom" || "$ROBOT_ARG" == "7" ]] && [[ -n "$CUSTOM_URDF" ]]; then
     if [[ -f "$CUSTOM_WRAPPER" ]]; then
         echo "[INFO] Delegating custom URDF setup to $CUSTOM_WRAPPER"

@@ -109,6 +109,30 @@ have_cmd() {
     command -v "$1" >/dev/null 2>&1
 }
 
+join_existing_dirs() {
+    local joined=""
+    local dir
+    for dir in "$@"; do
+        if [[ -d "$dir" ]]; then
+            joined="${joined}${joined:+:}$dir"
+        fi
+    done
+    printf '%s\n' "$joined"
+}
+
+ue_runtime_library_path() {
+    join_existing_dirs \
+        "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux" \
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Binaries/Linux" \
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux"
+}
+
+ros_runtime_library_path() {
+    join_existing_dirs \
+        "/opt/ros/humble/lib" \
+        "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux"
+}
+
 require_cmd() {
     local cmd="$1"
     local hint="${2:-}"
@@ -337,7 +361,7 @@ check_runtime_env() {
     local ue_binary=""
     if ue_binary="$(find_ue_binary)"; then
         log_ok "UE binary: ${ue_binary#$PROJECT_ROOT/}"
-        check_ldd_missing "$ue_binary" "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux:$PROJECT_ROOT/src/UeSim/Linux/Engine/Binaries/Linux:$PROJECT_ROOT/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux"
+        check_ldd_missing "$ue_binary" "$(ue_runtime_library_path)"
     else
         log_fail "missing UE binary under src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux" "Install base/assets packages, then rerun this check."
     fi
@@ -353,7 +377,7 @@ check_runtime_env() {
     if [[ "$MUJOCO_RUNNING" == "1" ]]; then
         local mujoco_bin="$PROJECT_ROOT/src/robot_mujoco/simulate/build/robot_mujoco"
         require_executable_file "$mujoco_bin" "Install the assets package or build robot_mujoco."
-        check_ldd_missing "$mujoco_bin"
+        check_ldd_missing "$mujoco_bin" "$(ros_runtime_library_path)"
         if [[ ! -f /opt/ros/humble/setup.bash ]]; then
             log_fail "ROS 2 Humble setup file not found: /opt/ros/humble/setup.bash" "Install ROS 2 Humble before enabling MuJoCo runtime."
         else
