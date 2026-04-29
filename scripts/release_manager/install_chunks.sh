@@ -690,6 +690,7 @@ log_section "[2] 下载并安装资源文件包 (必需)"
 
     ASSETS_RUNTIME_FILES=(
         "src/UeSim/Linux/Engine/Binaries/Linux/libEOSSDK-Linux-Shipping.so"
+        "src/UeSim/Linux/Engine/Content/Renderer/TessellationTable.bin"
         "src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux/libopencv_world.so.405"
         "src/robot_mujoco/simulate/build/robot_mujoco"
         "src/robot_mujoco/simulate/build/libstdc++.so.6"

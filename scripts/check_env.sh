@@ -361,6 +361,7 @@ check_runtime_env() {
     require_file "$PROJECT_ROOT/scene/scene.json" "Restore scene/scene.json or reinstall the assets package."
     require_file "$PROJECT_ROOT/src/robot_mujoco/simulate/config.yaml" "Install the MuJoCo runtime files from the assets package."
     require_file "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue.sh" "Install the base package or restore src/UeSim/Linux/zsibot_mujoco_ue.sh."
+    require_file "$PROJECT_ROOT/src/UeSim/Linux/Engine/Content/Renderer/TessellationTable.bin" "Reinstall the assets package; UE Nanite initialization requires this Engine runtime file."
 
     local runtime_robot
     if runtime_robot="$(robot_to_runtime_name "$ROBOT_ARG")"; then
