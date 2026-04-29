@@ -41,7 +41,7 @@ install_deb_glob() {
             cp -f "$pkg" "$tmp_pkg"
             chmod 644 "$tmp_pkg"
             apt_pkg="$tmp_pkg"
-            sudo apt install -y "$apt_pkg"
+            sudo apt install -y --allow-downgrades "$apt_pkg"
             matched=1
         fi
     done
