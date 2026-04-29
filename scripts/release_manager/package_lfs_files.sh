@@ -197,6 +197,20 @@ if [ -d "${PROJECT_ROOT}/src/robot_mujoco/simulate/build" ]; then
         total_size=$((total_size + size))
         log "  ✓ $(basename "${MUJOCO_BIN}") ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
     fi
+
+    if [ -e "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/libstdc++.so.6" ]; then
+        cp -a "${PROJECT_ROOT}/src/robot_mujoco/simulate/build"/libstdc++.so.6* "${TEMP_DIR}/src/robot_mujoco/simulate/build/"
+        while IFS= read -r lib_file; do
+            file_count=$((file_count + 1))
+            if [ -L "$lib_file" ]; then
+                log "  ✓ $(basename "$lib_file") -> $(readlink "$lib_file")"
+                continue
+            fi
+            size=$(stat -c%s "$lib_file" 2>/dev/null || stat -f%z "$lib_file" 2>/dev/null || echo 0)
+            total_size=$((total_size + size))
+            log "  ✓ $(basename "$lib_file") ($(numfmt --to=iec-i --suffix=B $size 2>/dev/null || echo "${size} bytes"))"
+        done < <(find "${TEMP_DIR}/src/robot_mujoco/simulate/build" -maxdepth 1 -name 'libstdc++.so.6*' | sort)
+    fi
     
     if [ -f "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/DynamicMapData.bin" ]; then
         cp "${PROJECT_ROOT}/src/robot_mujoco/simulate/build/DynamicMapData.bin" "${TEMP_DIR}/src/robot_mujoco/simulate/build/"
