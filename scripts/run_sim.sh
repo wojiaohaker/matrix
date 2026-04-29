@@ -19,16 +19,18 @@ CUSTOM_NAME="${7:-}"
 SIM_LAUNCHER_ROOT="${SIM_LAUNCHER_ROOT:-$PROJECT_ROOT}"
 CUSTOM_WRAPPER="$SIM_LAUNCHER_ROOT/scripts/run_custom_urdf.sh"
 
-prepend_ld_library_path() {
+join_ld_library_path() {
+    local joined=""
     local dir
     for dir in "$@"; do
         if [[ -d "$dir" ]]; then
-            case ":${LD_LIBRARY_PATH:-}:" in
-                *":$dir:"*) ;;
-                *) export LD_LIBRARY_PATH="$dir${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ;;
-            esac
+            joined="${joined}${joined:+:}$dir"
         fi
     done
+    if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
+        joined="${joined}${joined:+:}${LD_LIBRARY_PATH}"
+    fi
+    printf '%s\n' "$joined"
 }
 
 setup_runtime_environment() {
@@ -38,13 +40,26 @@ setup_runtime_environment() {
         source /opt/ros/humble/setup.bash
         set -u
     fi
+}
 
-    prepend_ld_library_path \
+mujoco_ld_library_path() {
+    join_ld_library_path \
+        "$PROJECT_ROOT/src/robot_mujoco/simulate/build" \
+        "/opt/ros/humble/lib" \
+        "/opt/ros/humble/lib/x86_64-linux-gnu" \
+        "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux" \
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Binaries/Linux"
+}
+
+ue_ld_library_path() {
+    join_ld_library_path \
         "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux" \
         "$PROJECT_ROOT/src/UeSim/Linux/Engine/Binaries/Linux" \
-        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux" \
-        "$PROJECT_ROOT/src/robot_mujoco/simulate/build" \
-        "/opt/ros/humble/lib"
+        "$PROJECT_ROOT/src/UeSim/Linux/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux"
+}
+
+mc_ld_library_path() {
+    join_ld_library_path "$PROJECT_ROOT/src/robot_mc/build/export/mc/bin"
 }
 
 setup_runtime_environment
@@ -446,13 +461,13 @@ echo "[INFO] Starting processes..."
 cd src/robot_mujoco/simulate/build
 if $ENABLE_MUJOCO; then
     echo "[INFO] Starting MuJoCo"
-    ./robot_mujoco > robot_mujoco.log 2>&1 &
+    LD_LIBRARY_PATH="$(mujoco_ld_library_path)" ./robot_mujoco > robot_mujoco.log 2>&1 &
     PIDS+=($!)
 fi
 
 cd ../../../UeSim/Linux
 echo "[INFO] Starting UE"
-./zsibot_mujoco_ue.sh -game "$MAPNAME" -ExecCmds="t.MaxFPS 30" $USE_OFFSCREEN $USE_PIXELSTREAMER > zsibot_mujoco_ue.log 2>&1 &
+LD_LIBRARY_PATH="$(ue_ld_library_path)" ./zsibot_mujoco_ue.sh -game "$MAPNAME" -ExecCmds="t.MaxFPS 30" $USE_OFFSCREEN $USE_PIXELSTREAMER > zsibot_mujoco_ue.log 2>&1 &
 PIDS+=($!)
 
 sleep 7
@@ -468,9 +483,9 @@ if $ENABLE_MC; then
             sed -i "s/^target_ip: .*/target_ip: \"${ROAMERX_TARGET_IP}\"/" "${SDK_CONFIG_FILE}"
         fi
         echo "[INFO] RoamerX link detected, starting MC with UDP target ${ROAMERX_TARGET_IP}:43988 and highlevel port 43997"
-        ./run_mc.sh r 25001 25002 43988 43997 25005 > run_mc.log 2>&1 &
+        LD_LIBRARY_PATH="$(mc_ld_library_path)" ./run_mc.sh r 25001 25002 43988 43997 25005 > run_mc.log 2>&1 &
     else
-        ./run_mc.sh r mc_enable=true > run_mc.log 2>&1 &
+        LD_LIBRARY_PATH="$(mc_ld_library_path)" ./run_mc.sh r mc_enable=true > run_mc.log 2>&1 &
     fi
     PIDS+=($!)
 fi
