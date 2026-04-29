@@ -289,7 +289,7 @@ download_and_extract_stream() {
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
         log "使用 curl 下载（支持断点续传）..."
-        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
         if [ -n "$http_proxy_url" ]; then
             curl_args+=(--proxy "$http_proxy_url")
         fi
@@ -426,7 +426,7 @@ download_file() {
     fi
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
-        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
+        local curl_args=(-L --fail --progress-bar -C - --retry 5 --retry-delay 3 --connect-timeout 30 --max-time 3600 --ssl-no-revoke)
         if [ -n "$http_proxy_url" ]; then
             curl_args+=(--proxy "$http_proxy_url")
         fi
@@ -817,6 +817,8 @@ if [ "$DOWNLOAD_SHARED" = true ]; then
         SHARED_SIZE=""
         SHARED_SHA256=""
         SHARED_IS_SPLIT=false
+        SHARED_CHECKSUM_FILE=""
+        SHARED_PARTS=()
         if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
             SHARED_FILE_FROM_MANIFEST=$(jq -r '.packages.shared.file // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
             if [ -n "$SHARED_FILE_FROM_MANIFEST" ]; then
@@ -826,11 +828,26 @@ if [ "$DOWNLOAD_SHARED" = true ]; then
             SHARED_SIZE=$(jq -r '.packages.shared.size // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
             SHARED_SHA256=$(jq -r '.packages.shared.sha256 // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
             SHARED_IS_SPLIT=$(jq -r '.packages.shared.is_split // false' "$MANIFEST_FILE" 2>/dev/null || echo "false")
+            SHARED_CHECKSUM_FILE=$(jq -r '.packages.shared.checksum_file // empty' "$MANIFEST_FILE" 2>/dev/null || echo "")
+            while IFS= read -r part_file; do
+                if [ -n "$part_file" ]; then
+                    SHARED_PARTS+=("$part_file")
+                fi
+            done < <(jq -r '.packages.shared.parts[]? // empty' "$MANIFEST_FILE" 2>/dev/null)
         fi
 
         # 检查共享资源包是否已安装
         if [ -f "${PAK_DIR}/pakchunk1-Linux.pak" ]; then
             log "✓ 共享资源包已安装，跳过"
+        elif [ "$SHARED_IS_SPLIT" = "true" ] && [ -f "${DOWNLOAD_DIR}/${SHARED_FILE}" ]; then
+            if verify_file_integrity "${DOWNLOAD_DIR}/${SHARED_FILE}" "$SHARED_SIZE" "$SHARED_SHA256"; then
+                log "✓ 共享资源包已合并且完整，跳过下载，直接解压..."
+                extract_tar "${DOWNLOAD_DIR}/${SHARED_FILE}" "$PAK_DIR"
+                log "✓ 共享资源包安装完成"
+            else
+                log "⚠️  已合并的共享资源包完整性验证失败，重新下载分片..."
+                rm -f "${DOWNLOAD_DIR}/${SHARED_FILE}"
+            fi
         elif [ "$SHARED_IS_SPLIT" != "true" ] && [ -f "${DOWNLOAD_DIR}/${SHARED_FILE}" ]; then
             if verify_file_integrity "${DOWNLOAD_DIR}/${SHARED_FILE}" "$SHARED_SIZE" "$SHARED_SHA256"; then
                 log "✓ 共享资源包已下载且完整，跳过下载，直接解压..."
@@ -855,32 +872,58 @@ if [ "$DOWNLOAD_SHARED" = true ]; then
                         log "检测到分片文件，开始下载分片..."
                         part_idx=0
                         download_success=true
-                        while true; do
-                            part_ext=$(printf "part%03d" $part_idx)
-                            part_file="${SHARED_FILE%.tar.gz}.tar.${part_ext}"
-                            part_url="${GITHUB_RELEASE_URL}/${part_file}"
-                          if download_file "$part_url" "$part_file"; then
-                              part_idx=$((part_idx + 1))
-                          else
-                                if [ $part_idx -eq 0 ]; then
-                                    log "⚠️  无法下载第一个分片: $part_file"
-                                    download_success=false
+                        if [ ${#SHARED_PARTS[@]} -gt 0 ]; then
+                            for part_file in "${SHARED_PARTS[@]}"; do
+                                part_url="${GITHUB_RELEASE_URL}/${part_file}"
+                                if download_file "$part_url" "$part_file"; then
+                                    part_idx=$((part_idx + 1))
                                 else
-                                    log "分片下载完成 (共 $part_idx 个)"
+                                    log "⚠️  分片下载失败: $part_file"
+                                    download_success=false
+                                    break
                                 fi
-                                break
+                            done
+                            if [ "$download_success" = true ]; then
+                                log "分片下载完成 (共 $part_idx 个)"
                             fi
-                        done
+                        else
+                            while true; do
+                                part_ext=$(printf "part%03d" $part_idx)
+                                part_file="${SHARED_FILE%.tar.gz}.tar.${part_ext}"
+                                part_url="${GITHUB_RELEASE_URL}/${part_file}"
+                                if download_file "$part_url" "$part_file"; then
+                                    part_idx=$((part_idx + 1))
+                                else
+                                    if [ $part_idx -eq 0 ]; then
+                                        log "⚠️  无法下载第一个分片: $part_file"
+                                        download_success=false
+                                    else
+                                        log "分片下载完成 (共 $part_idx 个)"
+                                    fi
+                                    break
+                                fi
+                            done
+                        fi
                         if [ "$download_success" = true ] && [ $part_idx -gt 0 ]; then
-                            sha_file="${SHARED_FILE%.tar.gz}.tar.sha256"
-                            download_file "${GITHUB_RELEASE_URL}/${sha_file}" "$sha_file" 2>/dev/null || true
+                            sha_file="${SHARED_CHECKSUM_FILE:-${SHARED_FILE%.tar.gz}.tar.sha256}"
+                            if download_file "${GITHUB_RELEASE_URL}/${sha_file}" "$sha_file" 2>/dev/null; then
+                                merge_expected_sha="${SHARED_FILE}.sha256"
+                                if [ "$sha_file" != "$merge_expected_sha" ] && [ ! -f "$merge_expected_sha" ]; then
+                                    cp "$sha_file" "$merge_expected_sha"
+                                fi
+                            fi
                             log "合并分片..."
                             chmod +x "$SHARED_MERGE_SCRIPT"
                             if ./$SHARED_MERGE_SCRIPT; then
-                                log "✓ 合并成功"
-                                extract_tar "$SHARED_FILE" "$PAK_DIR"
-                                log "✓ 共享资源包安装完成"
-                                log "✓ 文件保留在: ${DOWNLOAD_DIR}/"
+                                if verify_file_integrity "$SHARED_FILE" "$SHARED_SIZE" "$SHARED_SHA256"; then
+                                    log "✓ 合并成功"
+                                    extract_tar "$SHARED_FILE" "$PAK_DIR"
+                                    log "✓ 共享资源包安装完成"
+                                    log "✓ 文件保留在: ${DOWNLOAD_DIR}/"
+                                else
+                                    log "⚠️  合并后的共享资源包完整性验证失败"
+                                    rm -f "$SHARED_FILE"
+                                fi
                             else
                                 log "⚠️  合并失败"
                             fi
@@ -921,6 +964,8 @@ if [ ${#SELECTED_MAPS[@]} -gt 0 ]; then
         local map_size=""
         local map_sha256=""
         local is_split=false
+        local map_checksum_file=""
+        local map_parts=()
         if [ -f "$MANIFEST_FILE" ] && command -v jq &> /dev/null; then
             local map_file_from_manifest
             map_file_from_manifest=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .file // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
@@ -931,6 +976,12 @@ if [ ${#SELECTED_MAPS[@]} -gt 0 ]; then
             map_size=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .size // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
             map_sha256=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .sha256 // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
             is_split=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .is_split // false" "$MANIFEST_FILE" 2>/dev/null || echo "false")
+            map_checksum_file=$(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .checksum_file // empty" "$MANIFEST_FILE" 2>/dev/null || echo "")
+            while IFS= read -r part_file; do
+                if [ -n "$part_file" ]; then
+                    map_parts+=("$part_file")
+                fi
+            done < <(jq -r ".packages.maps[]? | select(.name==\"$map_name\") | .parts[]? // empty" "$MANIFEST_FILE" 2>/dev/null)
         fi
 
         # 检查是否已下载
@@ -977,38 +1028,65 @@ if [ ${#SELECTED_MAPS[@]} -gt 0 ]; then
             local part_idx=0
             local download_success=true
 
-            while true; do
-                local part_ext=$(printf "part%03d" $part_idx)
-                local part_file="${map_file%.tar.gz}.tar.${part_ext}"
-                local part_url="${GITHUB_RELEASE_URL}/${part_file}"
-
-                if download_file "$part_url" "$part_file" 2>/dev/null; then
-                    ((part_idx++))
-                else
-                    if [ $part_idx -eq 0 ]; then
-                        log "  ⚠️  无法下载第一个分片: $part_file"
-                        download_success=false
+            if [ ${#map_parts[@]} -gt 0 ]; then
+                for part_file in "${map_parts[@]}"; do
+                    local part_url="${GITHUB_RELEASE_URL}/${part_file}"
+                    if download_file "$part_url" "$part_file" 2>/dev/null; then
+                        part_idx=$((part_idx + 1))
                     else
-                        log "  分片下载完成 (共 $part_idx 个)"
+                        log "  ⚠️  分片下载失败: $part_file"
+                        download_success=false
+                        break
                     fi
-                    break
+                done
+                if [ "$download_success" = true ]; then
+                    log "  分片下载完成 (共 $part_idx 个)"
                 fi
-            done
+            else
+                while true; do
+                    local part_ext=$(printf "part%03d" $part_idx)
+                    local part_file="${map_file%.tar.gz}.tar.${part_ext}"
+                    local part_url="${GITHUB_RELEASE_URL}/${part_file}"
+
+                    if download_file "$part_url" "$part_file" 2>/dev/null; then
+                        part_idx=$((part_idx + 1))
+                    else
+                        if [ $part_idx -eq 0 ]; then
+                            log "  ⚠️  无法下载第一个分片: $part_file"
+                            download_success=false
+                        else
+                            log "  分片下载完成 (共 $part_idx 个)"
+                        fi
+                        break
+                    fi
+                done
+            fi
 
             if [ "$download_success" = true ] && [ $part_idx -gt 0 ]; then
                 # 下载校验和文件（可选）
-                local sha_file="${map_file%.tar.gz}.tar.sha256"
-                download_file "${GITHUB_RELEASE_URL}/${sha_file}" "$sha_file" 2>/dev/null || true
+                local sha_file="${map_checksum_file:-${map_file%.tar.gz}.tar.sha256}"
+                if download_file "${GITHUB_RELEASE_URL}/${sha_file}" "$sha_file" 2>/dev/null; then
+                    local merge_expected_sha="${map_file}.sha256"
+                    if [ "$sha_file" != "$merge_expected_sha" ] && [ ! -f "$merge_expected_sha" ]; then
+                        cp "$sha_file" "$merge_expected_sha"
+                    fi
+                fi
 
                 # 执行合并
                 log "  合并分片..."
                 chmod +x "$merge_script"
                 if ./$merge_script; then
-                    log "  ✓ 合并成功"
-                    extract_tar "$map_file" "$PAK_DIR"
-                    log "  ✓ ${map_name} 安装完成"
-                    log "  ✓ 文件保留在: ${DOWNLOAD_DIR}/"
-                    return 0
+                    if verify_file_integrity "$map_file" "$map_size" "$map_sha256"; then
+                        log "  ✓ 合并成功"
+                        extract_tar "$map_file" "$PAK_DIR"
+                        log "  ✓ ${map_name} 安装完成"
+                        log "  ✓ 文件保留在: ${DOWNLOAD_DIR}/"
+                        return 0
+                    else
+                        log "  ⚠️  合并后的地图包完整性验证失败"
+                        rm -f "$map_file"
+                        return 1
+                    fi
                 else
                     log "  ⚠️  合并失败"
                     return 1
