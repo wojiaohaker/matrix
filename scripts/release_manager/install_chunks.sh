@@ -480,55 +480,56 @@ log_section "[0] 下载 manifest 文件"
 MANIFEST_FILE="manifest-${VERSION}.json"
 MANIFEST_URL="${GITHUB_RELEASE_URL}/${MANIFEST_FILE}"
 
-# 检查 manifest 文件是否存在且有效
-manifest_valid=false
-if [ -f "$MANIFEST_FILE" ]; then
-    # 验证是否是有效的 JSON
+validate_manifest_file() {
+    local manifest_file="$1"
+
+    if [ ! -s "$manifest_file" ]; then
+        return 1
+    fi
+
     if command -v jq &> /dev/null; then
-        if jq empty "$MANIFEST_FILE" 2>/dev/null && manifest_has_expected_schema "$MANIFEST_FILE"; then
-            manifest_valid=true
-            log "✓ manifest 文件已存在且有效"
+        jq empty "$manifest_file" 2>/dev/null && manifest_has_expected_schema "$manifest_file"
+    else
+        grep -q '"version"' "$manifest_file" 2>/dev/null
+    fi
+}
+
+# 每次优先刷新远端 manifest，避免 release 覆盖更新后继续使用旧 size/sha。
+manifest_valid=false
+MANIFEST_TMP="${MANIFEST_FILE}.tmp.$$"
+
+log "正在刷新 manifest 文件..."
+if download_file "$MANIFEST_URL" "$MANIFEST_TMP"; then
+    if validate_manifest_file "$MANIFEST_TMP"; then
+        mv -f "$MANIFEST_TMP" "$MANIFEST_FILE"
+        manifest_valid=true
+        if command -v jq &> /dev/null; then
+            log "✓ manifest 文件已刷新并验证通过"
         else
-            log "⚠️  现有 manifest 文件无效或结构不完整，重新下载..."
-            rm -f "$MANIFEST_FILE"
+            log "✓ manifest 文件已刷新"
         fi
     else
-        # 如果没有 jq，简单检查文件大小和内容
-        if [ -s "$MANIFEST_FILE" ] && grep -q '"version"' "$MANIFEST_FILE" 2>/dev/null; then
-            manifest_valid=true
-            log "✓ manifest 文件已存在"
-        else
-            log "⚠️  现有 manifest 文件可能损坏，重新下载..."
-            rm -f "$MANIFEST_FILE"
-        fi
+        log "⚠️  下载的 manifest 文件无效或结构不完整"
+        rm -f "$MANIFEST_TMP"
     fi
+else
+    log "⚠️  manifest 文件下载失败"
+    rm -f "$MANIFEST_TMP"
 fi
 
-# 如果 manifest 无效或不存在，下载它
 if [ "$manifest_valid" = false ]; then
-    log "正在下载 manifest 文件..."
-    if download_file "$MANIFEST_URL" "$MANIFEST_FILE"; then
-        # 验证下载的文件是否有效
-        if command -v jq &> /dev/null; then
-            if jq empty "$MANIFEST_FILE" 2>/dev/null && manifest_has_expected_schema "$MANIFEST_FILE"; then
-                log "✓ manifest 文件下载成功并验证通过"
-                manifest_valid=true
+    if [ -f "$MANIFEST_FILE" ]; then
+        if validate_manifest_file "$MANIFEST_FILE"; then
+            manifest_valid=true
+            if command -v jq &> /dev/null; then
+                log "⚠️  使用本地已有 manifest（远端刷新失败）"
             else
-                log "⚠️  下载的 manifest 文件无效或结构不完整"
-                rm -f "$MANIFEST_FILE"
+                log "⚠️  使用本地已有 manifest"
             fi
         else
-            # 简单验证
-            if [ -s "$MANIFEST_FILE" ] && grep -q '"version"' "$MANIFEST_FILE" 2>/dev/null; then
-                log "✓ manifest 文件下载成功"
-                manifest_valid=true
-        else
-                log "⚠️  下载的 manifest 文件可能损坏"
-                rm -f "$MANIFEST_FILE"
-            fi
+            log "⚠️  现有 manifest 文件无效或结构不完整"
+            rm -f "$MANIFEST_FILE"
         fi
-    else
-        log "⚠️  manifest 文件下载失败"
     fi
 fi
 
