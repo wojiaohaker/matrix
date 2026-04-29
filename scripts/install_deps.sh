@@ -119,7 +119,7 @@ sudo apt install libopencv-dev -y
 sudo apt install jq -y
 sudo apt install libpcl-common1.12 -y
 ensure_ros2_humble_apt_source
-sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins -y
+sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins ros-humble-rmw-zenoh-cpp -y
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
