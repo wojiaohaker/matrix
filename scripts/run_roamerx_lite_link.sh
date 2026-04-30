@@ -151,6 +151,12 @@ zenoh_port_in_use() {
   fi
 }
 
+ros_package_available() {
+  local package="$1"
+  [ -f "${WORKSPACE_DIR}/install/setup.bash" ] || return 1
+  bash -lc "set +u; source '${WORKSPACE_DIR}/install/setup.bash' >/dev/null 2>&1 && ros2 pkg prefix '${package}' >/dev/null 2>&1"
+}
+
 is_link_running() {
   [ -f "${STATE_FILE}" ] || return 1
 
@@ -263,13 +269,18 @@ start_linked_stack() {
   fi
 
   if ! is_running "ros2 launch pub_tf pub_tf.launch.py"; then
-    if [ ! -f "${PUBTF_SETUP}" ]; then
-      echo "[ERROR] pub_tf setup not found: ${PUBTF_SETUP}"
-      echo "[ERROR] Please ensure pub_tf is built in the RoamerX workspace."
-      return 1
+    if ros_package_available "pub_tf"; then
+      if [ ! -f "${PUBTF_SETUP}" ]; then
+        echo "[ERROR] pub_tf setup not found: ${PUBTF_SETUP}"
+        echo "[ERROR] Please ensure pub_tf is built in the RoamerX workspace."
+        return 1
+      fi
+      pubtf_pid="$(start_background "pub_tf" "${LOG_DIR}/roamerx_pub_tf.log" \
+        "set +u; cd '${WORKSPACE_DIR}' && source install/setup.bash && exec ${PUBTF_LAUNCH}")"
+    else
+      echo "[WARN] Optional pub_tf package not found; skip it. robot_forward /robot_tf will publish TF from /odom/mujoco_odom when MATRiX is running."
+      pubtf_pid=""
     fi
-    pubtf_pid="$(start_background "pub_tf" "${LOG_DIR}/roamerx_pub_tf.log" \
-      "set +u; cd '${WORKSPACE_DIR}' && source install/setup.bash && exec ${PUBTF_LAUNCH}")"
   else
     echo "[INFO] pub_tf already running; skip launching a new one."
     pubtf_pid=""

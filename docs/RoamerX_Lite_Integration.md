@@ -120,6 +120,8 @@ For example:
 
 The launcher-side RoamerX integration resolves `genisom_roamerx_open` from this sibling layout by default. If it is placed elsewhere, export `GENISOM_ROAMERX_OPEN_WORKSPACE=/path/to/genisom_roamerx_open` before starting the launcher.
 
+The current `genisom_roamerx_open` workspace may not include the optional `pub_tf` package. The launcher skips it when missing; `robot_forward` publishes `odom -> base_link` TF from MATRiX `/odom/mujoco_odom` after the MATRiX simulation is running.
+
 1. **Launch MATRiX simulation first (provides odom for UE navigation):**
 ```bash
 # Terminal 0 (inside Docker container)
