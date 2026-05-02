@@ -21,6 +21,16 @@ This design allows users to:
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 
+### Full Offline Package
+
+If GitHub downloads are unavailable, download the prebuilt full package:
+
+- [matrix_0.1.2.zip (Google Drive)](https://drive.google.com/file/d/1d4q28AgSwmfv7x07oE-YF8xVOdSva9ll/view?usp=drive_link)
+- [matrix_0.1.2.zip (Baidu Netdisk, code: `jbk3`)](https://pan.baidu.com/s/12k5XJwD53ax3we3_1Gulmw?pwd=jbk3)
+- [matrix_0.1.2.zip (Artifactory, internal)](http://192.168.50.40:8081/artifactory/jszrsim/github/matrix_0.1.2.zip)
+
+SHA256: `452e030471c5fb94240b3bc5fb33b243ca84c6d7b4aa4452a1710f43fd804bfc`
+
 ### Manual Installation
 
 1. **Prepare Directory**

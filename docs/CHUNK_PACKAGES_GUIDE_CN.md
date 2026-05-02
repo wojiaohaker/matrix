@@ -21,6 +21,16 @@ MATRiX现在支持模块化打包，将模拟器内容分为：
 bash scripts/release_manager/install_chunks.sh 0.1.2
 ```
 
+### 完整离线包
+
+如果 GitHub 下载不可用，可以下载预打包的完整运行包：
+
+- [matrix_0.1.2.zip（Google Drive）](https://drive.google.com/file/d/1d4q28AgSwmfv7x07oE-YF8xVOdSva9ll/view?usp=drive_link)
+- [matrix_0.1.2.zip（百度网盘，提取码：`jbk3`）](https://pan.baidu.com/s/12k5XJwD53ax3we3_1Gulmw?pwd=jbk3)
+- [matrix_0.1.2.zip（Artifactory 内部链接）](http://192.168.50.40:8081/artifactory/jszrsim/github/matrix_0.1.2.zip)
+
+SHA256：`452e030471c5fb94240b3bc5fb33b243ca84c6d7b4aa4452a1710f43fd804bfc`
+
 ### 手动安装
 
 1. **准备目录**
