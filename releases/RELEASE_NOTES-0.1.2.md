@@ -1,5 +1,35 @@
 # MATRiX Release 0.1.2
 
+## Highlights
+
+- Added Pixel Streaming support for viewing the Unreal Engine simulation stream from a browser.
+- Added custom URDF import support for loading third-party MuJoCo/URDF robot models through the provided launch scripts.
+- Added one-click RoamerX Open integration in `sim_launcher` to start the ROS 2 Nav2 navigation stack together with MATRiX simulation.
+- Added runtime environment checks before launch. The checks now validate system dependencies, ROS 2 Humble, MuJoCo, MC, UE runtime assets, shared libraries, and required configuration files.
+- Added full offline package download options for `matrix_0.1.2.zip`, including Artifactory, Google Drive, and Baidu Netdisk links, with SHA256 verification.
+
+## New Maps
+
+- **ApartmentWorld**: apartment-style indoor scene for navigation and obstacle traversal tests.
+- **MeetRoomWorld**: meeting-room indoor scene for compact navigation and interaction tests.
+- **CaliWorld**: calibration and basic validation scene for quick functional checks.
+
+## Bug Fixes
+
+- Fixed `sim_launcher` keyboard control mode capturing movement keys globally and preventing other applications from using those keys normally.
+- Fixed release chunk installation issues around manifest refresh, split package download, merge, and checksum validation.
+- Fixed incomplete assets installation detection so missing runtime files trigger a reinstall instead of failing later at launch.
+- Fixed Ubuntu 22.04 dependency installation issues, including local deb install paths, optional ROS image transport packages, Zenoh, and `robot-forward` compatibility.
+- Fixed runtime shared library isolation between UE, MuJoCo, and MC processes to avoid `LD_LIBRARY_PATH` contamination.
+- Improved error reporting for missing runtime assets and shared libraries, including clearer `ldd` version-error diagnostics.
+- Fixed RoamerX Open workspace detection and launcher path handling.
+
+## Upgrade Notes
+
+- Recommended environment: Ubuntu 22.04 with ROS 2 Humble.
+- Existing users should rerun `scripts/install_deps.sh` and reinstall the 0.1.2 assets/base/chunk packages.
+- The Artifactory package link is for internal network use. External users should use Google Drive or Baidu Netdisk.
+
 ## Required Packages
 
 - **assets-0.1.2.tar.gz** (~675MB)
