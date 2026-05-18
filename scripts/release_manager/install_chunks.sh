@@ -17,6 +17,13 @@ GITHUB_RELEASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSI
 TARGET_DIR="${PROJECT_ROOT}/src/UeSim/Linux/zsibot_mujoco_ue"
 PAK_DIR="${TARGET_DIR}/Content/Paks"
 
+handle_interrupt() {
+    log "收到中断信号，停止安装"
+    exit 130
+}
+
+trap handle_interrupt INT TERM
+
 if [ "${MATRIX_SKIP_ENV_CHECK:-0}" != "1" ] && [ -x "${PROJECT_ROOT}/scripts/check_env.sh" ]; then
     "${PROJECT_ROOT}/scripts/check_env.sh" install
 fi
@@ -147,6 +154,39 @@ verify_file_integrity() {
     return 0
 }
 
+is_interrupted_exit() {
+    case "$1" in
+        130|131|143)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+exit_if_interrupted() {
+    local exit_code="$1"
+    if is_interrupted_exit "$exit_code"; then
+        set -e
+        log "收到中断信号，停止安装"
+        exit "$exit_code"
+    fi
+}
+
+stop_fallback_for_aria2_partial() {
+    local file="$1"
+
+    if [ -f "${file}.aria2" ]; then
+        set -e
+        log "检测到 aria2 未完成断点文件，保留以便下次 aria2 续传: $(basename "$file")"
+        log "为避免混用 wget/curl 断点续传导致文件损坏，本次停止下载。请重新运行脚本继续。"
+        return 0
+    fi
+
+    return 1
+}
+
 manifest_has_expected_schema() {
     local manifest_file="$1"
 
@@ -175,6 +215,11 @@ download_and_extract_stream() {
     # 确定最终文件名
     local final_file="${DOWNLOAD_DIR}/$(basename "$url" | sed 's/?.*$//')"
 
+    if [ -f "${final_file}.aria2" ] && [ ! -f "$final_file" ]; then
+        log "清理无对应数据文件的 aria2 断点文件: $(basename "${final_file}.aria2")"
+        rm -f "${final_file}.aria2"
+    fi
+
     # 如果文件已存在，验证完整性
     if [ -f "$final_file" ]; then
         if verify_file_integrity "$final_file" "$expected_size" "$expected_sha256"; then
@@ -187,7 +232,11 @@ download_and_extract_stream() {
             fi
         else
             log "文件已存在但完整性验证失败，重新下载..."
-            rm -f "$final_file"
+            if [ -f "${final_file}.aria2" ]; then
+                log "检测到 aria2 断点文件，将保留当前部分文件用于 aria2 续传"
+            else
+                rm -f "$final_file"
+            fi
         fi
     fi
 
@@ -237,8 +286,11 @@ download_and_extract_stream() {
             aria2c "${aria2_args[@]}" -d "$DOWNLOAD_DIR" -o "$(basename "$final_file")" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
         if [ $download_exit -eq 0 ]; then
             mv "${DOWNLOAD_DIR}/$(basename "$final_file")" "$final_file" 2>/dev/null || true
+        elif stop_fallback_for_aria2_partial "$final_file"; then
+            return 1
         fi
     elif [ "$skip_aria2" = true ]; then
         if [ "${SKIP_ARIA2:-0}" = "1" ]; then
@@ -263,6 +315,7 @@ download_and_extract_stream() {
             axel "${axel_args[@]}" -o "$final_file" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     if [ $download_exit -ne 0 ] && command -v wget &> /dev/null; then
@@ -285,6 +338,7 @@ download_and_extract_stream() {
             wget "${wget_args[@]}" -O "$final_file" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
@@ -298,6 +352,7 @@ download_and_extract_stream() {
             curl "${curl_args[@]}" -o "$final_file" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     # 重新启用 set -e
@@ -318,7 +373,7 @@ download_and_extract_stream() {
     # 验证文件完整性（大小和 SHA256）
     if ! verify_file_integrity "$final_file" "$expected_size" "$expected_sha256"; then
         log "⚠️  文件完整性验证失败，删除损坏的文件..."
-        rm -f "$final_file"
+        rm -f "$final_file" "${final_file}.aria2"
         return 1
     fi
 
@@ -337,6 +392,11 @@ download_file() {
     local url=$1
     local output=$2
     log "下载: $(basename "$output")"
+
+    if [ -f "${output}.aria2" ] && [ ! -f "$output" ]; then
+        log "清理无对应数据文件的 aria2 断点文件: $(basename "${output}.aria2")"
+        rm -f "${output}.aria2"
+    fi
 
     # 获取代理设置
     local proxy
@@ -380,8 +440,11 @@ download_file() {
             aria2c "${aria2_args[@]}" -d "$(dirname "$output")" -o "$(basename "$output")" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
         if [ $download_exit -eq 0 ] && [ "$(dirname "$output")/$(basename "$output")" != "$output" ]; then
             mv "$(dirname "$output")/$(basename "$output")" "$output" 2>/dev/null || true
+        elif stop_fallback_for_aria2_partial "$output"; then
+            return 1
         fi
     elif [ "$skip_aria2" = true ]; then
         if [ "${SKIP_ARIA2:-0}" = "1" ]; then
@@ -403,6 +466,7 @@ download_file() {
             axel "${axel_args[@]}" -o "$output" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     if [ $download_exit -ne 0 ] && command -v wget &> /dev/null; then
@@ -423,6 +487,7 @@ download_file() {
             wget "${wget_args[@]}" -O "$output" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     if [ $download_exit -ne 0 ] && command -v curl &> /dev/null; then
@@ -435,6 +500,7 @@ download_file() {
             curl "${curl_args[@]}" -o "$output" "$url"
         )
         download_exit=$?
+        exit_if_interrupted "$download_exit"
     fi
 
     # 重新启用 set -e
@@ -728,12 +794,38 @@ log_section "[2] 下载并安装资源文件包 (必需)"
 
         for relative_path in "${ASSETS_RUNTIME_FILES[@]}"; do
             if [ ! -f "${PROJECT_ROOT}/${relative_path}" ]; then
-                log "⚠️  资源运行时文件缺失: ${relative_path}"
                 all_ok=false
             fi
         done
 
         [ "$all_ok" = true ]
+    }
+
+    assets_has_installation_trace() {
+        local relative_path
+
+        if assets_launcher_ok; then
+            return 0
+        fi
+
+        for relative_path in "${ASSETS_RUNTIME_FILES[@]}"; do
+            if [ -f "${PROJECT_ROOT}/${relative_path}" ]; then
+                return 0
+            fi
+        done
+
+        return 1
+    }
+
+    log_missing_assets_runtime_files() {
+        local level="$1"
+        local relative_path
+
+        for relative_path in "${ASSETS_RUNTIME_FILES[@]}"; do
+            if [ ! -f "${PROJECT_ROOT}/${relative_path}" ]; then
+                log "${level} assets 运行时文件缺失: ${relative_path}"
+            fi
+        done
     }
 
     assets_installation_ok() {
@@ -744,8 +836,12 @@ log_section "[2] 下载并安装资源文件包 (必需)"
     ASSETS_INSTALLED=false
     if assets_installation_ok; then
         ASSETS_INSTALLED=true
-    elif assets_launcher_ok; then
-        log "⚠️  资源文件不完整，将重新安装 assets 包"
+    elif assets_has_installation_trace; then
+        log_missing_assets_runtime_files "⚠️ "
+        log "⚠️  assets 运行时文件不完整，将重新安装 assets 包"
+    else
+        log_missing_assets_runtime_files "[INFO]"
+        log "[INFO] assets 运行时文件尚未安装，将安装 assets 包"
     fi
 
     if [ "$ASSETS_INSTALLED" = true ]; then

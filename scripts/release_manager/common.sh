@@ -120,19 +120,6 @@ copy_models_from_uesim_to_robot_mujoco() {
 
     # Only publish the built-in robot models exposed by run_sim.sh 1-5.
     local published_robots=" xgb xgw zgws go2 go2w "
-
-    # Remove stale built-in model directories from previous releases. Keep
-    # custom because it may contain user-imported URDF cache data.
-    for stale_dir in "$robot_mujoco_dir"/*; do
-        if [ ! -d "$stale_dir" ]; then
-            continue
-        fi
-        stale_name=$(basename "$stale_dir")
-        if [[ "$published_robots" != *" $stale_name "* ]] && [ "$stale_name" != "custom" ]; then
-            rm -rf "$stale_dir" 2>/dev/null || true
-            log "  移除未发布模型目录: ${stale_name}"
-        fi
-    done
     
     local copied_count=0
     local skipped_count=0

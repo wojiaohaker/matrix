@@ -10,6 +10,7 @@ echo "Installing system dependencies "
 
 DEPS_DIR="deps"
 LOCAL_DEB_TMP_DIR=""
+APT_INDEX_UPDATED=0
 
 cleanup_local_deb_tmp_dir() {
     if [ -n "$LOCAL_DEB_TMP_DIR" ]; then
@@ -56,6 +57,13 @@ apt_has_package() {
     apt-cache show "$1" >/dev/null 2>&1
 }
 
+apt_update_once() {
+    if [ "$APT_INDEX_UPDATED" -eq 0 ]; then
+        sudo apt update
+        APT_INDEX_UPDATED=1
+    fi
+}
+
 remove_partial_robot_forward() {
     local status
     status="$(dpkg-query -W -f='${db:Status-Abbrev}' robot-forward 2>/dev/null || true)"
@@ -92,7 +100,7 @@ ensure_ros2_humble_apt_source() {
 
     echo "deb [arch=$(dpkg --print-architecture) signed-by=${ros_keyring}] ${ros_repo_url} ${ubuntu_codename} main" \
         | sudo tee /etc/apt/sources.list.d/ros2.list >/dev/null
-    sudo apt update
+    apt_update_once
 
     if ! apt_has_package ros-humble-ros-base; then
         echo "ERROR: ROS 2 Humble packages are still unavailable after adding ${ros_repo_url}."
@@ -119,7 +127,8 @@ sudo apt install libopencv-dev -y
 sudo apt install jq -y
 sudo apt install libpcl-common1.12 -y
 ensure_ros2_humble_apt_source
-sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins ros-humble-rmw-zenoh-cpp -y
+apt_update_once
+sudo apt install ros-humble-desktop ros-humble-image-transport ros-humble-image-transport-plugins ros-humble-rmw-zenoh-cpp ros-humble-zenoh-cpp-vendor -y
 sudo apt install qtcreator -y
 sudo apt install qtquickcontrols2-5-dev -y
 sudo apt install qml-module-qtquick-controls2 -y
