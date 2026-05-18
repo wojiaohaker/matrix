@@ -12,10 +12,73 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 cd "$PROJECT_ROOT"
 
-VERSION="${1:-0.1.2}"
-REPO="zsibot/matrix"
+VERSION="0.1.2"
+REPO="${MATRIX_RELEASE_REPO:-zsibot/matrix}"
+PUBLISH_RELEASE="${MATRIX_RELEASE_PUBLISH:-ask}"
 RELEASE_DIR="releases"
 MAX_SIZE=2147483648  # 2GB in bytes (GitHub Releases limit)
+
+usage() {
+    cat <<'EOF'
+Usage:
+  scripts/release_manager/upload_to_release.sh [VERSION] [options]
+
+Options:
+  --repo OWNER/REPO  GitHub repository (default: zsibot/matrix)
+  --publish          Publish draft release without prompting
+  --draft            Keep draft release without prompting
+  --ask              Ask whether to publish draft release (default)
+  -h, --help         Show this help
+EOF
+}
+
+if [ $# -gt 0 ] && [[ "${1:-}" != --* ]]; then
+    VERSION="$1"
+    shift
+fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --repo)
+            REPO="${2:-}"
+            shift 2
+            ;;
+        --publish)
+            PUBLISH_RELEASE="yes"
+            shift
+            ;;
+        --draft|--no-publish)
+            PUBLISH_RELEASE="no"
+            shift
+            ;;
+        --ask)
+            PUBLISH_RELEASE="ask"
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            error_exit "Unknown option: $1"
+            ;;
+    esac
+done
+
+case "$PUBLISH_RELEASE" in
+    yes|true|1)
+        PUBLISH_RELEASE="yes"
+        ;;
+    no|false|0)
+        PUBLISH_RELEASE="no"
+        ;;
+    ask|"")
+        PUBLISH_RELEASE="ask"
+        ;;
+    *)
+        error_exit "Invalid MATRIX_RELEASE_PUBLISH value: ${PUBLISH_RELEASE} (expected yes, no, or ask)"
+        ;;
+esac
 
 agent_log() {
     if [ -n "${log_file:-}" ]; then
@@ -608,8 +671,16 @@ is_draft=$(gh release view "v${VERSION}" --repo "$REPO" --json isDraft -q '.isDr
 
 if [ "$is_draft" == "true" ]; then
     log "Release 当前是草稿状态"
-    read -p "是否发布 Release? (从草稿状态发布) [Y/n]: " -n 1 -r
-    echo
+    if [ "$PUBLISH_RELEASE" = "ask" ]; then
+        read -p "是否发布 Release? (从草稿状态发布) [Y/n]: " -n 1 -r
+        echo
+    elif [ "$PUBLISH_RELEASE" = "yes" ]; then
+        REPLY="Y"
+        log "MATRIX_RELEASE_PUBLISH=yes，自动发布 Release"
+    else
+        REPLY="N"
+        log "MATRIX_RELEASE_PUBLISH=no，保持草稿状态"
+    fi
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
         log "发布 Release..."
         # 获取 Release 的 databaseId（REST API 需要数字 ID，不是 GraphQL ID）
