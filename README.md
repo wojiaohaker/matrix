@@ -80,11 +80,11 @@ To keep this README concise, detailed guides have been organized into the `docs/
 
 ## 💬 Community
 
-**Join our WeChat group for MATRiX simulation discussions:**
+**Add the GENISOM AI WeChat assistant for MATRiX simulation discussions and support:**
 
 <div align="center">
-  <img src="demo_gif/wechat.png" alt="WeChat Group QR Code" style="height: 280px; width: auto; margin: 0 12px;"/>
-  <p><em>Scan to join MATRiX simulation community</em></p>
+  <img src="demo_gif/wechat.png" alt="GENISOM AI WeChat Assistant QR Code" style="height: 320px; width: auto; margin: 0 12px;"/>
+  <p><em>Scan to add XinQi Robo; mention MATRiX to join the simulation community.</em></p>
 </div>
 
 ## 🙏 Acknowledgements

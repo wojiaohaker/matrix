@@ -80,11 +80,11 @@ bash scripts/check_env.sh runtime
 
 ## 💬 交流社区
 
-**加入我们的微信群,参与 MATRiX 仿真交流:**
+**添加新奇Robo微信助手，获取 MATRiX 仿真交流与支持：**
 
 <div align="center">
-  <img src="../demo_gif/wechat.png" alt="微信群二维码" style="height: 280px; width: auto; margin: 0 12px;"/>
-  <p><em>扫码加入 MATRiX 仿真交流群</em></p>
+  <img src="../demo_gif/wechat.png" alt="新奇Robo微信助手二维码" style="height: 320px; width: auto; margin: 0 12px;"/>
+  <p><em>扫码添加新奇Robo，备注 MATRiX 加入仿真交流。</em></p>
 </div>
 
 ## 🙏 致谢
