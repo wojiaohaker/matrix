@@ -29,12 +29,12 @@ MATRiX provides various scripts to help you build, install, and run the simulato
 
 ```bash
 # 1. On a machine with internet, download packages
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 
 # 2. Copy the releases/ directory to offline machine
 
 # 3. On offline machine, install from local files
-bash scripts/release_manager/install_chunks_local.sh 0.1.2
+bash scripts/release_manager/install_chunks_local.sh
 # → Installs assets package (required) and all other packages from releases/ directory
 ```
 
@@ -42,11 +42,11 @@ bash scripts/release_manager/install_chunks_local.sh 0.1.2
 
 ```bash
 # Option 1: Download and install new maps
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 # → Select additional maps to download
 
 # Option 2: If files already in releases/, just install
-bash scripts/release_manager/install_chunks_local.sh 0.1.2
+bash scripts/release_manager/install_chunks_local.sh
 # → Installs assets package (if needed) and all available maps from releases/
 ```
 
@@ -54,7 +54,7 @@ bash scripts/release_manager/install_chunks_local.sh 0.1.2
 
 ```bash
 # Quick reinstall from local releases/ directory
-bash scripts/release_manager/install_chunks_local.sh 0.1.2
+bash scripts/release_manager/install_chunks_local.sh
 # → No download needed, fast installation
 ```
 

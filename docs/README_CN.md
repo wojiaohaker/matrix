@@ -13,7 +13,7 @@
 
 </div>
 
-> **最后更新：** 2026-04-28
+> **最后更新：** 2026-07-20
 
 MATRiX 是一个集成了 **MuJoCo**、**Unreal Engine 5** 和 **CARLA** 的高级仿真平台，提供用于四足机器人研究的高保真、交互式环境。其软件在环（software-in-the-loop）架构支持真实物理仿真、沉浸式视觉效果，并优化了仿真到现实的迁移（sim-to-real）以便机器人开发与部署。
 
@@ -36,14 +36,14 @@ cd matrix
 bash scripts/install_deps.sh
 
 # 安装 release 资源分块包（base、runtime assets、shared 和选择的地图）
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 
 # 依赖和资源安装完成后再检查运行时环境
 bash scripts/check_env.sh runtime
 ```
 *`scripts/run_sim.sh` 和 `scripts/run_custom_urdf.sh` 在启动前会自动执行运行时环境检查。*
 *如果 ROS apt 源访问受限，可使用 `ROS_APT_REPO_URL=<可访问的ros2 apt镜像> bash scripts/install_deps.sh` 指定镜像后重试。*
-*如果网络环境下 aria2/wget 出现 TLS 错误，可使用 `SKIP_ARIA2=1 bash scripts/release_manager/install_chunks.sh 0.1.2` 强制走备用下载路径。*
+*如果网络环境下 aria2/wget 出现 TLS 错误，可使用 `SKIP_ARIA2=1 bash scripts/release_manager/install_chunks.sh` 强制走备用下载路径。*
 *完整离线包：[matrix_0.1.2.zip（Artifactory）](http://192.168.50.40:8081/artifactory/jszrsim/github/matrix_0.1.2.zip) / [Google Drive](https://drive.google.com/file/d/1d4q28AgSwmfv7x07oE-YF8xVOdSva9ll/view?usp=drive_link) / [百度网盘，提取码：`jbk3`](https://pan.baidu.com/s/12k5XJwD53ax3we3_1Gulmw?pwd=jbk3)。*
 *无法访问 GitHub？请参阅 [Chunk Packages 使用指南](CHUNK_PACKAGES_GUIDE_CN.md) 了解离线手动安装方法。*
 
@@ -86,6 +86,13 @@ bash scripts/check_env.sh runtime
   <img src="../demo_gif/wechat.png" alt="新奇Robo微信助手二维码" style="height: 320px; width: auto; margin: 0 12px;"/>
   <p><em>扫码添加新奇Robo，备注 MATRiX 加入仿真交流。</em></p>
 </div>
+
+## 🤝 参与贡献
+
+欢迎提交缺陷报告、文档改进和运行时工具修复。开始前请阅读
+[贡献指南](../CONTRIBUTING.md)；修改启动或发布脚本前，请先阅读
+[架构与维护指南](MAINTAINER_GUIDE.md)。安全问题请按照
+[安全策略](../SECURITY.md) 私下报告，不要创建公开 Issue。
 
 ## 🙏 致谢
 

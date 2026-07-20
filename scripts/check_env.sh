@@ -4,6 +4,11 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Keep user-facing package hints aligned with the release scripts. This script
+# intentionally does not source release_manager/common.sh because it is also
+# used to diagnose partially installed repositories.
+PROJECT_VERSION="$(head -n 1 "$PROJECT_ROOT/VERSION" 2>/dev/null || printf 'unknown')"
+
 MODE="runtime"
 ROBOT_ARG="xgb"
 SCENE_ID="1"
@@ -366,7 +371,7 @@ check_runtime_env() {
     local runtime_robot
     if runtime_robot="$(robot_to_runtime_name "$ROBOT_ARG")"; then
         if [[ "$runtime_robot" != "custom" ]]; then
-            require_dir "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Content/model/$runtime_robot" "Install base-${VERSION:-0.1.2}.tar.gz or run scripts/release_manager/install_chunks_local.sh."
+            require_dir "$PROJECT_ROOT/src/UeSim/Linux/zsibot_mujoco_ue/Content/model/$runtime_robot" "Install base-${VERSION:-$PROJECT_VERSION}.tar.gz or run scripts/release_manager/install_chunks_local.sh."
             require_dir "$PROJECT_ROOT/src/robot_mujoco/zsibot_robots/$runtime_robot" "Install assets/base packages so robot model files are available."
         fi
     else

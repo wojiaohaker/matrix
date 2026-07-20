@@ -18,7 +18,7 @@ MATRiX现在支持模块化打包，将模拟器内容分为：
 ### 自动安装（推荐）
 
 ```bash
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 ```
 
 ### 完整离线包
@@ -67,7 +67,7 @@ SHA256：`452e030471c5fb94240b3bc5fb33b243ca84c6d7b4aa4452a1710f43fd804bfc`
    回到项目根目录并运行安装脚本：
    ```bash
    cd ..
-   bash scripts/release_manager/install_chunks_local.sh 0.1.2
+   bash scripts/release_manager/install_chunks_local.sh
    ```
 
 ## 📋 包说明

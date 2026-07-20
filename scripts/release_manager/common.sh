@@ -33,6 +33,23 @@ error_exit() {
     exit 1
 }
 
+# Read the repository's canonical release version. Release commands may accept
+# an explicit version for preparing a future release, but every default must
+# come from VERSION so installers, packagers, and uploaders cannot drift apart.
+read_project_version() {
+    local version_file="${PROJECT_ROOT}/VERSION"
+    local version
+
+    [ -r "$version_file" ] || error_exit "missing version file: $version_file"
+    IFS= read -r version < "$version_file"
+    if ! [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+        error_exit "invalid semantic version in $version_file: $version"
+    fi
+    printf '%s\n' "$version"
+}
+
+PROJECT_VERSION="$(read_project_version)"
+
 # 解压 tar.gz 文件到指定目录
 # 用法: extract_tar <tar_file> <extract_dir>
 extract_tar() {

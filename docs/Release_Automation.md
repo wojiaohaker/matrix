@@ -15,7 +15,7 @@ This workflow treats `jszr_mujoco_ue2` as the source project and `matrix` as the
 From the `matrix` directory:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --all --upload --publish --make-latest
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --all --upload --publish --make-latest
 ```
 
 The pipeline runs:
@@ -40,34 +40,41 @@ copies files into the tarball and does not delete runtime files from `matrix`.
 Package and test locally without uploading:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --all
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --all
 ```
 
 Package only selected chunks:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --chunk-ids 0,1,24
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --chunk-ids 0,1,24
 ```
 
 Use a clean UE package build:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --all --clean
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --all --clean
 ```
 
 Upload but keep the release as draft:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --all --upload
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --all --upload
 ```
 
 Run only copy/manifest/test after UE packages already exist:
 
 ```bash
-bash scripts/release_manager/release_pipeline.sh 0.1.3 --skip-ue-package --skip-release-package
+bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --skip-ue-package --skip-release-package
 ```
 
 ## Notes
+
+- `VERSION` at the repository root is the single source of truth for the
+  current release. Scripts that support a default read it from this file;
+  release-producing commands still require an explicit version for safety.
+- To prepare a future release, update `VERSION` in a dedicated pull request and
+  pass the same version explicitly while testing. Do not edit defaults in
+  individual scripts.
 
 - `--publish` implies upload and publishes the release without an interactive prompt.
 - `--upload` uploads artifacts but keeps a newly created release as draft.

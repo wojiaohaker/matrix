@@ -13,7 +13,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
-VERSION="${1:-0.1.1}"
+VERSION="${1:-${PROJECT_VERSION}}"
 RELEASE_DIR="${PROJECT_ROOT}/releases"
 PACKAGE_NAME="assets-${VERSION}.tar.gz"
 PACKAGE_PATH="${RELEASE_DIR}/${PACKAGE_NAME}"
@@ -21,8 +21,8 @@ TEMP_DIR="${RELEASE_DIR}/.temp_assets_${VERSION}"
 
 log_section "打包 Assets 文件 (版本: ${VERSION})"
 
-# 检查版本参数
-if [ -z "$1" ]; then
+# 未显式传入版本时，使用仓库根目录 VERSION 中的当前版本。
+if [ -z "${1:-}" ]; then
     log "⚠️  未指定版本号，使用默认版本: ${VERSION}"
 fi
 

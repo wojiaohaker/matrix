@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Custom robot import is a staged synchronization pipeline:
+#   1. validate the source URDF and select the nearest supported profile;
+#   2. normalize meshes and generate MuJoCo XML in an isolated cache directory;
+#   3. restore profile-specific physics/sensor contracts;
+#   4. validate the generated XML before replacing the active runtime copies.
+# MuJoCo and UE consume separate directory trees, so every successful import
+# must update both trees from the same staged result. PIPELINE_VERSION is part
+# of the cache identity and must change whenever generated output semantics do.
+
 ROBOT_ARG="${1:-custom}"
 SCENE_ID="${2:-1}"
 OFFSCREEN="${3:-0}"
@@ -292,6 +301,9 @@ get_reference_ue_assets() {
 }
 
 preflight_custom_urdf() {
+    # Reject ambiguous names and malformed/unsafe mesh references before any
+    # runtime directory is modified. The embedded Python performs structural
+    # checks that are easier to express with an XML parser than with shell tools.
     local urdf_path="$1"
     local asset_dir="$2"
 
@@ -376,11 +388,16 @@ PY
 }
 
 rewrite_mesh_paths() {
+    # URDF mesh paths may be package-relative, file URLs, or local paths. Copy
+    # resolved files into the import cache and rewrite references so generated
+    # runtime content remains relocatable.
     local target_file="$1"
     sed -i "s|filename=\"../meshes/|filename=\"${ASSET_DIR_NAME}/|g" "$target_file" || true
 }
 
 normalize_mesh_aliases() {
+    # Generate deterministic aliases for mesh names that collide after case or
+    # path normalization; both UE and MuJoCo copies must use the same mapping.
     local target_file="$1"
     local asset_dir="$2"
 
@@ -475,6 +492,9 @@ PY
 }
 
 write_bbox_stl_proxy_from_binary_stl() {
+    # Extremely large binary STL files can exceed practical import limits. This
+    # fallback writes a conservative bounding-box proxy without changing the
+    # source asset, allowing validation to continue with explicit warnings.
     local src_stl="$1"
     local dst_stl="$2"
 
@@ -583,6 +603,8 @@ PY
 }
 
 normalize_mjcf() {
+    # Normalize converter output into the repository's MJCF contract. Keep this
+    # transformation profile-agnostic; profile restoration happens later.
     local target_xml="$1"
     if [[ ! -f "$target_xml" ]]; then
         return
@@ -726,6 +748,8 @@ EOF
 }
 
 sync_runtime_layout() {
+    # Copy only from the staged import into both runtime trees. Callers must not
+    # treat either runtime tree as the source of truth for the other.
     local cache_xml="$1"
     local cache_urdf="$2"
     local cache_assets_dir="$3"
@@ -795,6 +819,8 @@ sync_runtime_layout() {
 }
 
 restore_urdf_visual_meshes() {
+    # Reattach visual geometry lost by converters while preserving collision
+    # geometry and inertial properties already present in the generated MJCF.
     local urdf_path="$1"
     local mjcf_path="$2"
     if [[ ! -f "$urdf_path" || ! -f "$mjcf_path" ]]; then
@@ -940,6 +966,8 @@ PY
 }
 
 restore_urdf_fixed_links() {
+    # Fixed URDF links may be collapsed by conversion. Reconstruct their visual,
+    # collision, and inertial data under the surviving parent body.
     local urdf_path="$1"
     local mjcf_path="$2"
     if [[ ! -f "$urdf_path" || ! -f "$mjcf_path" ]]; then
@@ -1155,11 +1183,15 @@ PY
 # now use the reference-XML direct-copy path (sync_runtime_layout); unknown robots use
 # restore_generic_runtime_layout. Do not resurrect this function.
 restore_reference_markers_and_sensors() {
+    # Supported profiles rely on named sites and sensors consumed by downstream
+    # controllers. Restore them from the reference model after geometry repair.
     echo '[ERROR] restore_reference_markers_and_sensors is deprecated and must not be called' >&2
     return 1
 }
 
 restore_generic_runtime_layout() {
+    # Unknown robots cannot inherit a profile contract. Apply only the minimum
+    # floating-base, actuator, and sensor layout required by generic validation.
     local mjcf_path="$1"
     local urdf_path="${2:-}"
     if [[ ! -f "$mjcf_path" ]]; then
@@ -1670,6 +1702,8 @@ PY
 }
 
 write_import_metadata() {
+    # Metadata makes cache reuse auditable: source hash detects input changes,
+    # while generator_version invalidates output after pipeline behavior changes.
     local metadata_path="$1"
     local source_sha256="$2"
     jq -n \
@@ -1698,6 +1732,8 @@ write_import_metadata() {
 }
 
 read_metadata_value() {
+    # Read through jq instead of sourcing metadata; metadata content is data and
+    # must never be evaluated as shell code.
     local metadata_path="$1"
     local key="$2"
     jq -r --arg key "$key" '.[$key] // empty' "$metadata_path"

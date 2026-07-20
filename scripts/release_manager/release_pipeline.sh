@@ -71,8 +71,8 @@ Options:
   -h, --help              Show this help
 
 Examples:
-  bash scripts/release_manager/release_pipeline.sh 0.1.3 --all --upload --publish --make-latest
-  bash scripts/release_manager/release_pipeline.sh 0.1.3 --chunk-ids 0,1,24 --clean --skip-local-install
+  bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --all --upload --publish --make-latest
+  bash scripts/release_manager/release_pipeline.sh "$(cat VERSION)" --chunk-ids 0,1,24 --clean --skip-local-install
 EOF
 }
 
@@ -166,6 +166,9 @@ parse_args() {
         error_exit "missing VERSION"
     fi
 
+    # Release operations deliberately require an explicit version. The caller
+    # should normally pass $(cat VERSION); requiring it prevents an accidental
+    # no-argument invocation from starting a release build.
     VERSION="$1"
     shift
 

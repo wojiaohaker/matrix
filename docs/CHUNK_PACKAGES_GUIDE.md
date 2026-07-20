@@ -18,7 +18,7 @@ This design allows users to:
 ### Automatic Installation (Recommended)
 
 ```bash
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 ```
 
 ### Full Offline Package
@@ -67,7 +67,7 @@ SHA256: `452e030471c5fb94240b3bc5fb33b243ca84c6d7b4aa4452a1710f43fd804bfc`
    Return to the project root and run the installation script:
    ```bash
    cd ..
-   bash scripts/release_manager/install_chunks_local.sh 0.1.2
+   bash scripts/release_manager/install_chunks_local.sh
    ```
 
 ## 📋 Package Description

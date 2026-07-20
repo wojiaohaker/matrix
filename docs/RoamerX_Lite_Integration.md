@@ -181,9 +181,8 @@ bash script/bash/start_navigation.sh
 3. **Send Navigation Goals via RViz2**
    - In RViz2, use the “nav2_rviz_plugins” panel to send navigation commands.
    - The robot will execute navigation tasks such as waypoint patrols with static and dynamic obstacle avoidance.
-   - Demo results (Note: Check the clear GIFs in the demo_gif folder.):
-     - patrol task with multiple midpoints
-       -   ![patrol task with avoidance](demo_gif/ue_mini.gif)
+   - Demo media is maintained with the RoamerX project and is not included in
+     this runtime repository.
 
 4. **Stop the Navigation Stack**
 ```bash
@@ -211,12 +210,8 @@ Make sure the Gazebo simulation is running to publish odometry (/odom/gazebo) an
 3. **Send Navigation Goals via RViz2**
    - Open RViz2 and use the “2D Goal Pose” tool to send navigation targets.
    - The robot will autonomously navigate to the goal position, avoiding both static and dynamic obstacles.
-   - Demo results:
-     - 🟢 Static Avoidance
-        ![single point with static avoidance](demo_gif/single_static.gif)
-
-     - 🔵 Dynamic Avoidance
-        ![single point with dynamic avoidance](demo_gif/single_dynamic.gif)
+   - Demo media is maintained with the RoamerX project and is not included in
+     this runtime repository.
 
 #### Patrol Task Navigation
 1. **Launch Navigation Stack:**
@@ -236,9 +231,8 @@ rviz2 -d /path/to/your/rviz2_config.rviz
 
 3. **Launch RViz to Send Navigation Goals:**
    - Use "nav2_rviz_plugins" Panel in RViz2 to send navigation commands
-   - Demo results:
-     - patrol task with multiple midpoints
-        ![patrol task with avoidance](demo_gif/patrol.gif)
+   - Demo media is maintained with the RoamerX project and is not included in
+     this runtime repository.
 
 ### Hardware Deployment
 
@@ -514,7 +508,8 @@ Include:
 
 ## 📄 License
 
-This project is released under the **Open Source License**. See [LICENSE](LICENSE) file for details.
+This project is released under the **BSD 3-Clause License**. See the repository
+[LICENSE](../LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

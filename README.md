@@ -13,7 +13,7 @@
 
 </div>
 
-> **Last Updated:** 2026-04-28
+> **Last Updated:** 2026-07-20
 
 MATRiX is an advanced simulation platform that integrates **MuJoCo**, **Unreal Engine 5**, and **CARLA** to provide high-fidelity, interactive environments for quadruped robot research. Its software-in-the-loop architecture enables realistic physics, immersive visuals, and optimized sim-to-real transfer for robotics development and deployment.
 
@@ -36,7 +36,7 @@ cd matrix
 bash scripts/install_deps.sh
 
 # Install release assets (base package, runtime assets, shared resources, and selected maps)
-bash scripts/release_manager/install_chunks.sh 0.1.2
+bash scripts/release_manager/install_chunks.sh
 
 # Verify after dependencies and assets are installed
 bash scripts/check_env.sh runtime
@@ -86,6 +86,14 @@ To keep this README concise, detailed guides have been organized into the `docs/
   <img src="demo_gif/wechat.png" alt="GENISOM AI WeChat Assistant QR Code" style="height: 320px; width: auto; margin: 0 12px;"/>
   <p><em>Scan to add XinQi Robo; mention MATRiX to join the simulation community.</em></p>
 </div>
+
+## 🤝 Contributing
+
+Bug reports, documentation improvements, and runtime tooling changes are
+welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and review the
+[architecture and maintainer guide](docs/MAINTAINER_GUIDE.md) before changing
+launch or release scripts. Security issues should follow [SECURITY.md](SECURITY.md)
+rather than being filed as public issues.
 
 ## 🙏 Acknowledgements
 
