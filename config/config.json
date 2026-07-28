@@ -68,6 +68,10 @@
         "random_scan": false,
         "frequency": 10
       }
-    }
+    },
+    "mujoco_running": false,
+    "state_port": 25001,
+    "cmd_port": 25002,
+    "EgoView": true
   }
 }

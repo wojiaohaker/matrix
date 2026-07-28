@@ -18,18 +18,27 @@ Kp_ori            : [500, 500, 500]
 Kd_ori            : [50, 50, 50]
 
 #FSM kp kd
-FSM_jointPD_Kp    : 120
-FSM_jointPD_Kd    : 4.0
-FSM_passive_Kd    : 4.0
-FSM_RL_Kp         : 60.0
+FSM_jointPD_Kp    : 250
+FSM_jointPD_Kd    : 5.0
+FSM_passive_Kd    : 16.0
+FSM_passive_Wheel_Kd    : 0.1
+FSM_RL_ABAD_Kp    : 60.0
+FSM_RL_HIP_Kp     : 120.0
+FSM_RL_KNEE_Kp    : 120.0
 FSM_RL_Kd         : 1.0
 FSM_RL_Wheel_Kp   : 60.0
 FSM_RL_Wheel_Kd   : 0.5
+Montion_Joint_Kp  : 160
+Montion_Joint_Kd  : 5.0
+Charge_Joint_Kp   : 400.0
+Charge_Joint_Kd   : 5.0
 
 FSM_RLBalanceStand_Kp         : 60.0
 FSM_RLBalanceStand_Kd         : 1.0
-FSM_RLBalanceStand_Wheel_Kp   : 60.0
+FSM_RLBalanceStand_Wheel_Kp   : 20.0
 FSM_RLBalanceStand_Wheel_Kd   : 0.5
+FSM_RLLowpower_Wheel_Kp       : 0.0
+FSM_RLLowpower_Wheel_Kd       : 0.0
 
 # banlance stand
 FSM_balance_pitch : 1.0
@@ -50,10 +59,11 @@ cmpc_x_drag       : 0
 cmpc_x_vel        : 2.0 # x方向最大速度指令m/s
 cmpc_y_vel        : 0.5 # y方向最大速度指令m/s
 cmpc_yaw_vel      : 2.0 # 最大偏航角速度指令rad/s
-body_height       : 0.5 # 身体高度m
+body_height       : 0.48 # 身体高度m
 body_height_ratio : 1.0 # 低身行走高度比例
 leg_height_ratio : 1.0 # 足端抬腿高度比例
 leg_height        : 0.1 # 抬腿高度m
+brake_deltavel    : 0.05
 mpc_horizon_length         : 14 # MPC预测的步长
 gait_horizon_length        : 14 # 步态周期的步长
 use_wbc           : 1
@@ -76,7 +86,7 @@ motor_platform_type: 5
 enable_foldleg: 0
 # Gait Scheduler parameters
 gait_type             : 4
-gait_period_time      : 0.5
+gait_period_time      : 0.2
 gait_switching_phase  : 0.5
 gait_override         : 4
 gait_max_leg_angle    : 15
@@ -91,14 +101,21 @@ knee_side_sign   : [-1., 1., -1., 1.]
 wheel_side_sign  : [1., -1., 1., -1.]
 
 abad_offset   : [0.523, -0.523, -0.523, 0.523]
-hip_offset    : [-2.792, 2.792, 2.792, -2.792]
-knee_offset   : [-2.775, 2.775, 2.775, -2.775]
+hip_offset    : [-2.443, 2.443, 2.443, -2.443]
+knee_offset   : [-2.803, 2.803, 2.803, -2.803]
 wheel_offset  : [0., 0., 0., 0.]
 
 hip_range        : [-6.28, 0.1, -0.1, 6.28, -6.28, 0.1, -0.1, 6.28]
 hip_range_offset : [-6.283185, 6.283185, -6.283185, 6.283185]
 
-#rl_default_pos
+#joint pos
+abad_stand_pos   : [0., 0., 0., 0.]
+hip_stand_pos    : [0.6, 0.6, -0.6, -0.6]
+knee_stand_pos   : [-1.2, -1.2, 1.2, 1.2]
+
+abad_liedown_pos   : [0., 0., 0., 0.]
+hip_liedown_pos    : [1.4, 1.4, -1.4, -1.4]
+knee_liedown_pos   : [-2.4, -2.4, 2.4, 2.4]
 #rl_default_pos
 abad_default_pos   : [0., -0., 0., -0.]
 hip_default_pos    : [0.8, 0.8, -0.8, -0.8]

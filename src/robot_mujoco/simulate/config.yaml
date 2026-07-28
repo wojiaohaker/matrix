@@ -1,5 +1,5 @@
 robot: "xgb"
-robot_scene: "scene_terrain_moon_dynamic.xml"
+robot_scene: "scene_terrain_yard.xml"
 
 print_scene_information: 1 # Print link, joint and sensors information of robot
 

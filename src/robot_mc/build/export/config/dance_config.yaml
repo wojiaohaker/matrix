@@ -1,112 +1,56 @@
-dance_1:
+ZGWS_dance_1:
   - name: stand
     type: consecutive
     control_mode: 1
-    motion_mode: 0
+    motion_mode: 10
     duration: 0.0
     vel_cmd: [0.0, 0.0, 0.0]
     angular_cmd: [0.0, 0.0, 0.0]
 
-  - name: walk
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 2.0
-    vel_cmd: [1.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-  
-  - name: walk_left
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 2.0
-    vel_cmd: [0.0, 0.5, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-  
-  - name: walk_right
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 4.0
-    vel_cmd: [0.0, -0.5, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: walk_left
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 2.0
-    vel_cmd: [0.0, 0.5, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: walk_back
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 2.0
-    vel_cmd: [-0.5, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: frontJump
-    type: consecutive
-    control_mode: 18
-    motion_mode: 6
-    duration: 0.0
-    vel_cmd: [0.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: turn_left
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 4.0
-    vel_cmd: [0.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 3.0]
-
-  - name: turn_right
-    type: continuous
-    control_mode: 18
-    motion_mode: 0
-    duration: 4.0
-    vel_cmd: [0.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, -3.0]
-  
-  - name: backflip
-    type: consecutive
-    control_mode: 18
-    motion_mode: 2
-    duration: 0.0
-    vel_cmd: [0.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: sideflip
-    type: consecutive
-    control_mode: 18
-    motion_mode: 3
-    duration: 0.0
-    vel_cmd: [0.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
-
-  - name: upright
+  - name: twist
     type: continuous
     control_mode: 21
-    motion_mode: 7
-    duration: 3.0
-    vel_cmd: [1.0, 0.0, 0.0]
-    angular_cmd: [0.0, 0.0, 0.0]
+    motion_mode: 100
+    duration: 1.0
+    vel_cmd: [0.0, 0.0, 0.0]
+    angular_cmd: [0.0, 0.0, 0.5]
 
-  # - name: shakehand
-  #   type: consecutive
-  #   control_mode: 1
-  #   motion_mode: 11
-  #   duration: 0.0
-  #   vel_cmd: [0.0, 0.0, 0.0]
-  #   angular_cmd: [0.0, 0.0, 0.0]
+  - name: twist
+    type: continuous
+    control_mode: 21
+    motion_mode: 100
+    duration: 1.0
+    vel_cmd: [0.0, 0.0, 0.0]
+    angular_cmd: [0.0, 0.0, -0.5]
+
+  - name: twist
+    type: continuous
+    control_mode: 21
+    motion_mode: 100
+    duration: 1.0
+    vel_cmd: [0.0, 0.0, 0.0]
+    angular_cmd: [0.0, 0.0, 0.5]
+
+  - name: twist
+    type: continuous
+    control_mode: 21
+    motion_mode: 100
+    duration: 1.0
+    vel_cmd: [0.0, 0.0, 0.0]
+    angular_cmd: [0.0, 0.0, -0.5]
+
+  - name: twist
+    type: continuous
+    control_mode: 21
+    motion_mode: 100
+    duration: 1.0
+    vel_cmd: [0.0, 0.0, 0.0]
+    angular_cmd: [0.0, 0.0, 0.0]
 
   - name: end
     type: consecutive
     control_mode: 18
-    motion_mode: 0
+    motion_mode: 1
     duration: 0.0
     vel_cmd: [0.0, 0.0, 0.0]
     angular_cmd: [0.0, 0.0, 0.0]

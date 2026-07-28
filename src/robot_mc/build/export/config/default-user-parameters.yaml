@@ -21,15 +21,24 @@ Kd_ori            : [10, 10, 10]
 FSM_jointPD_Kp    : 80
 FSM_jointPD_Kd    : 1
 FSM_passive_Kd    : 3
-FSM_RL_Kp         : 20
+FSM_passive_Wheel_Kd    : 0.0
+FSM_RL_ABAD_Kp    : 20.0
+FSM_RL_HIP_Kp     : 20.0
+FSM_RL_KNEE_Kp    : 20.0
 FSM_RL_Kd         : 0.7
 FSM_RL_Wheel_Kp   : 0.0
 FSM_RL_Wheel_Kd   : 0.0
+Montion_Joint_Kp  : 40
+Montion_Joint_Kd  : 2.0
+Charge_Joint_Kp   : 400.0
+Charge_Joint_Kd   : 2.0
 
 FSM_RLBalanceStand_Kp         : 20
 FSM_RLBalanceStand_Kd         : 0.7
 FSM_RLBalanceStand_Wheel_Kp   : 0.0
 FSM_RLBalanceStand_Wheel_Kd   : 0.0
+FSM_RLLowpower_Wheel_Kp       : 0.0
+FSM_RLLowpower_Wheel_Kd       : 0.0
 
 # banlance stand parameters
 FSM_balance_pitch : 0.4
@@ -53,6 +62,7 @@ cmpc_yaw_vel      : 1.0 # 最大偏航角速度指令rad/s
 body_height       : 0.29 # 身体高度m
 body_height_ratio : 1.0 # 低身行走高度比例
 leg_height        : 0.08 # 抬腿高度m
+brake_deltavel    : 0.05
 mpc_horizon_length         : 10 # MPC预测的步长
 gait_horizon_length        : 10 # 步态周期的步长
 use_wbc           : 1 # 是否使用WBC控制
@@ -67,8 +77,8 @@ jointVelocityLimit    : 18.0
 enable_joint_pos_protect: 0
 enable_joint_pos_limit: 0
 feet_z_offset: 0.0
-imu_type: 2  #0:lordImu  1:NormalImu  2:UnitreeImu
-motor_platform_type: 1  #0:spi  1:unitree
+imu_type: 0  #0:lordImu  1:NormalImu  2:UnitreeImu
+motor_platform_type: 0  #0:spi  1:unitree
 enable_foldleg: 0
 # Gait Scheduler parameters
 gait_type             : 4
@@ -93,6 +103,14 @@ wheel_offset  : [0.0, 0.0, 0.0, 0.0]
 hip_range        : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 hip_range_offset : [0.0, 0.0, 0.0, 0.0]
 
+#joint pos
+abad_stand_pos   : [0., 0., 0., 0.]
+hip_stand_pos    : [0.8, 0.8, 0.8, 0.8]
+knee_stand_pos   : [-1.5, -1.5, -1.5, -1.5]
+
+abad_liedown_pos   : [0., 0., 0., 0.]
+hip_liedown_pos    : [0.8, 0.8, 0.8, 0.8]
+knee_liedown_pos   : [-1.5, -1.5, -1.5, -1.5]
 #rl_default_pos
 abad_default_pos   : [0., 0., 0., 0.]
 hip_default_pos    : [0.8, 0.8, 0.8, 0.8]

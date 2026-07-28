@@ -46,29 +46,35 @@ odom_gait_path:
   ZGW:
 policy_mix_walk_path:
   XG: rknn_model_crypto/xg/policy_mix_walk
+  XXG: rknn_model_crypto/xxg/policy_0105
   ZG: rknn_model_crypto/zg/policy
   XGW:
   ZGW:
 odom_mix_walk_path:
   XG: rknn_model_crypto/xg/odom_mix_walk
+  XXG: rknn_model_crypto/xxg/odom_0105
   ZG: rknn_model_crypto/zg/odom
   XGW:
   ZGW:
 
 policy_gait_walk_path:
   XG: rknn_model_crypto/xg/policy_gait_walk
-  XGW:
-  ZGW:
+  ZG: rknn_model_crypto/zg/policy_gait_walk
+  XGW: rknn_model_crypto/xg_wheel/policy_gait_walk
+  ZGWS: rknn_model_crypto/zg_wheels/policy_gait_walk
 odom_gait_walk_path:
   XG: rknn_model_crypto/xg/odom_gait_walk
-  XGW:
-  ZGW:
+  ZG: rknn_model_crypto/zg/odom_gait_walk
+  XGW: rknn_model_crypto/xg_wheel/odom_gait_walk
+  ZGWS: rknn_model_crypto/zg_wheels/odom_gait_walk
 policy_mix_flipover_path:
   XG: rknn_model_crypto/xg/policy_mix_flipover
+  ZG: rknn_model_crypto/zg/policy_flipover
   XGW: rknn_model_crypto/xg_wheel/policy_mix_flipover
   ZGW:
 odom_mix_flipover_path:
   XG: rknn_model_crypto/xg/odom_mix_flipover
+  ZG: rknn_model_crypto/zg/odom_flipover
   XGW: rknn_model_crypto/xg_wheel/odom_mix_flipover
   ZGW:
 
@@ -110,11 +116,13 @@ odom_mix_sideflip_path:
   ZGW:
 policy_balancestand_path:
   XG: rknn_model_crypto/xg/policy_balancestand_withyaw_0423
+  ZG: rknn_model_crypto/zg/policy_rpy8
   XGW: rknn_model_crypto/xg_wheel/policy_xgw_rpy_2
   ZGW:
   ZGWS: rknn_model_crypto/zg_wheels/policy_zgws_rpy
 odom_balancestand_path:
   XG: rknn_model_crypto/xg/odom_balancestand_withyaw_0423
+  ZG: rknn_model_crypto/zg/odom_rpy8
   XGW: rknn_model_crypto/xg_wheel/odom_xgw_rpy_2
   ZGW:
   ZGWS: rknn_model_crypto/zg_wheels/odom_zgws_rpy
@@ -136,12 +144,22 @@ odom_walkpos_path:
   ZGW:
 policy_mix_climb_path:
   XG:
+  ZG: rknn_model_crypto/zg/policy_o2
   XGW: rknn_model_crypto/xg_wheel/policy_climb
-  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/policy_climb
 odom_mix_climb_path:
   XG:
+  ZG: rknn_model_crypto/zg/odom_o2
   XGW: rknn_model_crypto/xg_wheel/odom_climb
-  ZGW:
+  ZGWS:  rknn_model_crypto/zg_wheels/odom_climb
+policy_mix_dsb_path:
+  XG:
+  XGW: 
+  ZGWS: rknn_model_crypto/zg_wheels/policy_dsb
+odom_mix_dsb_path:
+  XG:
+  XGW: 
+  ZGWS:  rknn_model_crypto/zg_wheels/odom_dsb
 policy_mix_handstand_path:
   XG:
   XGW: rknn_model_crypto/xg_wheel/policy_handstand
@@ -161,17 +179,105 @@ odom_ik_path:
   XGW:
   ZGW:
 policy_mix_crawl_path:
-  XG:
-  XGW: rknn_model_crypto/xg_wheel/policy_xgw_crawl_0827
+  XG: rknn_model_crypto/xg/policy_mix_crawl_260127
+  XGW: rknn_model_crypto/xg_wheel/policy_xgw_su_crawl_1222
   ZGW:
-  ZGWS: rknn_model_crypto/zg_wheels/policy_zgwt_crawl_0818_2
+  ZGWS: rknn_model_crypto/zg_wheels/policy_zgwt_crawl_1029
 odom_mix_crawl_path:
-  XG:
-  XGW: rknn_model_crypto/xg_wheel/odom_xgw_crawl_0827
+  XG: rknn_model_crypto/xg/policy_mix_crawl_260127
+  XGW: rknn_model_crypto/xg_wheel/odom_xgw_su_crawl_1222
   ZGW:
-  ZGWS: rknn_model_crypto/zg_wheels/odom_zgwt_crawl_0818_2
+  ZGWS: rknn_model_crypto/zg_wheels/odom_zgwt_crawl_1029
+
+policy_skwalk_path:
+  XG:
+  XGW: rknn_model_crypto/xg_wheel/policy_skwalk
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/policy_skwalk
+odom_skwalk_path:
+  XG:
+  XGW:  rknn_model_crypto/xg_wheel/odom_skwalk
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/odom_skwalk
+
+policy_snow_path:
+  XG:
+  XGW: 
+  ZGWS: rknn_model_crypto/zg_wheels/policy_snow
+odom_snow_path:
+  XG:
+  XGW: 
+  ZGWS: rknn_model_crypto/zg_wheels/odom_snow
+
+policy_tuoluo_path:
+  XG:
+  XGW: 
+  ZGWS: rknn_model_crypto/zg_wheels/policy_tuoluo
+odom_tuoluo_path:
+  XG:
+  XGW: 
+  ZGWS: rknn_model_crypto/zg_wheels/odom_tuoluo
+
+policy_stair_path:
+  XG:
+  ZG: rknn_model_crypto/zg/policy_stair
+  XGW: rknn_model_crypto/xg_wheel/policy_stair
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/policy_stair
+odom_stair_path:
+  XG:
+  ZG: rknn_model_crypto/zg/odom_stair
+  XGW: rknn_model_crypto/xg_wheel/odom_stair
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/odom_stair
+
+policy_slim_path:
+  XG:
+  ZG: rknn_model_crypto/zg/policy_gait_walk
+  XGW:
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/policy_slim
+odom_slim_path:
+  XG:
+  ZG: rknn_model_crypto/zg/odom_gait_walk
+  XGW:
+  ZGW:
+  ZGWS: rknn_model_crypto/zg_wheels/odom_slim
 
 rl_odom_path:
   XG: rknn_model_crypto/xg/odom_2ms_notau
+  ZG: rknn_model_crypto/zg/zg_2ms_odom
   XGW:
   ZGW:
+
+policy_mix_measured_path:
+  XG: rknn_model_crypto/xg/policy_measured_0918
+  ZG:
+  XGW:
+  ZGW:
+odom_mix_measured_path:
+  XG: rknn_model_crypto/xg/odom_measured_0918
+  ZG:
+  XGW:
+  ZGW:
+
+policy_moon_walk_path:
+  XG: rknn_model_crypto/xg/policy_moonwalk
+  ZG:      
+
+odom_moon_walk_path:         
+  XG: rknn_model_crypto/xg/odom_moonwalk
+  ZG:
+
+policy_mix_lowpower_path:
+  XG: 
+  ZG:
+  XGW: rknn_model_crypto/xg_wheel/policy_lowpower
+  ZGW:
+  ZGWS:
+odom_mix_lowpower_path:
+  XG: 
+  ZG:
+  XGW: rknn_model_crypto/xg_wheel/odom_lowpower
+  ZGW:
+  ZGWS:

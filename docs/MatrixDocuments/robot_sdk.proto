@@ -1,0 +1,83 @@
+// Matrix robot_sdk protobuf 消息定义
+// 通过抓取 UE↔mc_ctrl 实际通信数据逆向工程得出
+// 验证方式: 重编码与原始数据完全匹配 (303/365 字节)
+//
+// 通信方式: zsibot::rmw 中间件, UDP 传输
+//   UE → mc_ctrl: port 25001 (RobotState, 303 bytes)
+//   mc_ctrl → UE: port 25002 (RobotCmd, 365 bytes)
+//
+// 关节顺序: [FR, FL, RR, RL] (右前, 左前, 右后, 左后)
+
+syntax = "proto3";
+
+package robot_sdk.pb;
+
+// UE → mc_ctrl: 机器人状态反馈
+message RobotState {
+    // 关节位置 (rad)
+    repeated float q_abad = 1;      // [4] 外展/内收
+    repeated float q_hip = 2;       // [4] 髋关节
+    repeated float q_knee = 3;      // [4] 膝关节
+
+    // 关节速度 (rad/s)
+    repeated float qd_abad = 4;     // [4]
+    repeated float qd_hip = 5;      // [4]
+    repeated float qd_knee = 6;     // [4]
+
+    // 机体角速度? (rad/s) - 4个值, 静止时为0
+    repeated float omega_body = 7;  // [4] 待确认
+
+    // 力矩反馈 (N·m) - 静止时为0
+    repeated float tau_abad_fb = 8; // [4]
+    repeated float tau_hip_fb = 9;  // [4]  注意: 实际值可能是足端位置
+    repeated float tau_knee_fb = 10;// [4]  注意: 实际值可能是足端位置
+
+    // 足端位置? 或位置 (cm?)
+    repeated float position = 11;   // [4] 值约 3.7~4.7
+    repeated float tau_ff = 12;     // [4] 静止时为0
+
+    // 姿态
+    repeated float quat = 13;       // [4] 四元数 [w, x, y, z]
+    repeated float gyro = 14;       // [3] 陀螺仪 (rad/s)
+    repeated float acc = 15;        // [3] 加速度计 (m/s²), 静止时≈[0,0,9.8]
+
+    // 时间戳 (纳秒)
+    uint64 time_stamp = 17;
+
+    // 欧拉角 / 其他
+    repeated float rpy = 19;        // [3] 待确认
+    repeated float omega_world = 20;// [3] 待确认
+}
+
+// mc_ctrl → UE: 控制指令
+message RobotCmd {
+    // 目标关节位置 (rad)
+    repeated float q_des_abad = 1;  // [4]
+    repeated float q_des_hip = 2;   // [4]
+    repeated float q_des_knee = 3;  // [4]
+
+    // 目标关节速度 (rad/s)
+    repeated float qd_des_abad = 4; // [4]
+    repeated float qd_des_hip = 5;  // [4]
+    repeated float qd_des_knee = 6; // [4]
+
+    // 前馈力矩 (N·m)
+    repeated float tau_abad_ff = 7; // [4]
+    repeated float tau_hip_ff = 8;  // [4]
+
+    // PD 增益
+    repeated float kp_abad = 9;     // [4] 趴地时=20, 站立时预期更大
+    repeated float kp_hip = 10;     // [4]
+    repeated float kp_knee = 11;    // [4]
+    repeated float kd_abad = 12;    // [4] 趴地时=0
+    repeated float kd_hip = 13;     // [4] 趴地时=0.7
+    repeated float kd_knee = 14;    // [4] 趴地时=0.7
+
+    // 足端控制
+    repeated float kp_foot = 15;    // [4] 趴地时=0.7
+    repeated float kd_foot = 16;    // [4]
+    repeated float q_des_foot = 17; // [4]
+    repeated float qd_des_foot = 18;// [4]
+    repeated float tau_foot_fb = 19;// [4]
+    repeated float tau_foot_ff = 20;// [4]
+}

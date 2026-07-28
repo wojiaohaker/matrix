@@ -19,16 +19,27 @@ Kd_ori            : [50, 50, 50]
 
 #FSM kp kd
 FSM_jointPD_Kp    : 200
-FSM_jointPD_Kd    : 4.0
-FSM_passive_Kd    : 4.0
-FSM_RL_Kp         : 60.0
-FSM_RL_Kd         : 2.0
+FSM_jointPD_Kd    : 5.0
+FSM_passive_Kd    : 16.0
+FSM_passive_Wheel_Kd    : 0.1
+FSM_RL_ABAD_Kp    : 60.0
+FSM_RL_HIP_Kp     : 120.0
+FSM_RL_KNEE_Kp    : 120.0
+FSM_RL_Kd         : 1.0
 FSM_RL_Wheel_Kp   : 60.0
-FSM_RL_Wheel_Kd   : 0.25
-FSM_RLBalanceStand_Kp         : 80.0
-FSM_RLBalanceStand_Kd         : 2.0
-FSM_RLBalanceStand_Wheel_Kp   : 80.0
+FSM_RL_Wheel_Kd   : 0.2
+Montion_Joint_Kp  : 160
+Montion_Joint_Kd  : 5.0
+Charge_Joint_Kp   : 400.0
+Charge_Joint_Kd   : 5.0
+
+FSM_RLBalanceStand_Kp         : 60.0
+FSM_RLBalanceStand_Kd         : 1.0
+FSM_RLBalanceStand_Wheel_Kp   : 20.0
 FSM_RLBalanceStand_Wheel_Kd   : 0.5
+FSM_RLLowpower_Wheel_Kp       : 0.0
+FSM_RLLowpower_Wheel_Kd       : 0.0
+
 # banlance stand
 FSM_balance_pitch : 1.0
 FSM_balance_roll  : 1.0
@@ -45,13 +56,14 @@ cmpc_fmax         : 120
 cmpc_com_offset   : [0, 0, 0]
 cmpc_x_drag       : 0
 
-cmpc_x_vel        : 1.0 # x方向最大速度指令m/s
+cmpc_x_vel        : 2.0 # x方向最大速度指令m/s
 cmpc_y_vel        : 0.5 # y方向最大速度指令m/s
 cmpc_yaw_vel      : 2.0 # 最大偏航角速度指令rad/s
-body_height       : 0.5 # 身体高度m
+body_height       : 0.48 # 身体高度m
 body_height_ratio : 1.0 # 低身行走高度比例
 leg_height_ratio : 1.0 # 足端抬腿高度比例
 leg_height        : 0.1 # 抬腿高度m
+brake_deltavel    : 0.05
 mpc_horizon_length         : 14 # MPC预测的步长
 gait_horizon_length        : 14 # 步态周期的步长
 use_wbc           : 1
@@ -59,8 +71,8 @@ cmpc_gait         : 8
 cmpc_bonus_swing  : 0
 preview_time      : 0.5
 # Joint position limit and protect
-JPos_limit_low    : [-0.5, -2.6, -2.79]
-JPos_limit_high   : [0.5, 2.6, -0.7]
+JPos_limit_low    : [-0.873, -2.80, -2.775]
+JPos_limit_high   : [0.873, 2.80, 2.775]
 #P2P
 #JPos_limit_low    : [-13.5, -13.5, -13.5]
 #JPos_limit_high   : [14, 12.0, 15.0]
@@ -70,11 +82,11 @@ enable_joint_pos_protect: 1
 enable_joint_pos_limit: 1
 feet_z_offset: 0.095
 imu_type: 0
-motor_platform_type: 6
+motor_platform_type: 7 # 5 mujoco # 6 shm 7 shmContainer
 enable_foldleg: 0
 # Gait Scheduler parameters
 gait_type             : 4
-gait_period_time      : 0.5
+gait_period_time      : 0.2
 gait_switching_phase  : 0.5
 gait_override         : 4
 gait_max_leg_angle    : 15
@@ -85,28 +97,36 @@ gait_min_stance_time  : 0.1
 
 abad_side_sign   : [-1., -1., 1., 1.]
 hip_side_sign    : [1., -1., 1., -1.]
-knee_side_sign   : [1., -1., 1., -1.]
-wheel_side_sign  : [1., -1., 1.,-1.]
+knee_side_sign   : [-1., 1., -1., 1.]
+wheel_side_sign  : [1., -1., 1., -1.]
 
-abad_offset   : [0.488398164, -0.48898164, -0.488398164, 0.488398164]
-hip_offset    : [-2.967, 2.967, -2.967, 2.967]
-knee_offset   : [2.723, -2.723, 2.723, -2.723]
+abad_offset   : [0.523, -0.523, -0.523, 0.523]
+hip_offset    : [-2.443, 2.443, 2.443, -2.443]
+knee_offset   : [-2.803, 2.803, 2.803, -2.803]
 wheel_offset  : [0., 0., 0., 0.]
 
 hip_range        : [-6.28, 0.1, -0.1, 6.28, -6.28, 0.1, -0.1, 6.28]
 hip_range_offset : [-6.283185, 6.283185, -6.283185, 6.283185]
 
+#joint pos
+abad_stand_pos   : [0., 0., 0., 0.]
+hip_stand_pos    : [0.6, 0.6, 0.6, 0.6]
+knee_stand_pos   : [-1.2, -1.2, -1.2, -1.2]
+
+abad_liedown_pos   : [0., 0., 0., 0.]
+hip_liedown_pos    : [1.4, 1.4, 1.4, 1.4]
+knee_liedown_pos   : [-2.4, -2.4, -2.4, -2.4]
 #rl_default_pos
-abad_default_pos   : [0.1, -0.1, 0.1, -0.1]
-hip_default_pos    : [0.8, 0.8, 0.8, 0.8]
-knee_default_pos   : [-1.5, -1.5, -1.5, -1.5]
+abad_default_pos   : [0., -0., 0., -0.]
+hip_default_pos    : [0.6, 0.6, 0.6, 0.6]
+knee_default_pos   : [-1.2, -1.2, -1.2, -1.2]
 wheel_default_pos  : [0., 0., 0., 0.]
 
 body_half_length   : 0.27
-drop_height       : 0.0
-min_crawl_x_vel   : 0.0
-max_crawl_x_vel   : 0.0
-min_crawl_y_vel   : 0.0
-max_crawl_y_vel   : 0.0
-min_crawl_ang_vel : 0.0
-max_crawl_ang_vel : 0.0
+drop_height        : -0.22
+min_crawl_x_vel   : -2.0
+max_crawl_x_vel   : 2.0
+min_crawl_y_vel   : -0.5
+max_crawl_y_vel   : 0.5
+min_crawl_ang_vel : -2.0
+max_crawl_ang_vel : 2.0
