@@ -616,6 +616,95 @@ Matrix UE (zsibot_mujoco_ue)  ←→  mc_ctrl
 
 
 
+让我分析这三个终端的完整数据链路。先确认一个关键参数：
+
+
+数据链路分析完成。**按 W 没反应的根本原因不在按键，而在 mc_ctrl 卡死在 STANDUP 模式**。下面是完整分析：
+
+## 数据链路逐段诊断
+
+```
+① 键盘捕获        ② 虚拟手柄       ③ mc_ctrl 模式      ④ UE 执行
+keyboard_control   →  gamepad    →   STANDUP卡住    →   Kp=80站立
+   ✅ 正常             ✅ 正常          ❌ 瓶颈            (不响应速度)
+```
+
+**① 按键捕获正常**（Terminal 56-72）：
+```
+[按键] W(前进)  ABS_Y=-32768 ABS_X=0 RX=0   ← W 被正确捕获并发出
+```
+
+**② mc_ctrl 收到并进入 STANDUP**（Terminal 981-1026）：
+```
+[joystic] find 1 joystic          ← 手柄识别正常
+body height is 0.374925, Folding legs
+Operating Mode: NORMAL in STANDUP  ← 卡在 STANDUP（迭代9999、19999都是）
+```
+
+**③ UE 持续应用 STANDUP 指令**（Terminal 1010-1025）：
+```
+maxKp=80.0 active=1   ← 一直是 Kp=80（STANDUP），从未变成 Kp=20（RLMIX）
+```
+
+## 核心问题：W 为什么无效
+
+| 模式                      | Kp   | 行为            | 速度指令(W)  |
+| ------------------------- | ---- | --------------- | ------------ |
+| **STANDUP**（当前卡在这） | 80   | 只保持站立姿态  | ❌ **被忽略** |
+| **RLMIX**（行走模式）     | 20   | RL 策略驱动行走 | ✅ 响应       |
+
+**W 控制行走必须在 RLMIX 模式才生效**。但 mc_ctrl 从 STANDUP 转换到 RLMIX 的条件没满足，所以一直卡在站立，W 自然没反应。
+
+## 为什么转换失败
+
+STANDUP→RLMIX 的转换条件：**身体高度接近目标值**（误差 < ±10%）
+
+```
+mc_ctrl 用 FK(关节角) 算出的身体高度 = 0.3749 m
+配置目标 body_height              = 0.32 m
+高度比 = 0.3749 / 0.32 = 1.17
+转换要求 |1.17 - 1.0| < 0.1  →  0.17 > 0.1  ❌ 失败
+```
+
+mc_ctrl 认为机器人"太高了"（0.375 vs 目标 0.32，偏差 17%），所以拒绝进入行走模式。
+
+## 根本原因
+
+这是 **UE 与 mc_ctrl 的关节约定不一致**导致的：UE 发送的站立关节角（hip=0.8, knee=-1.5）在 UE 里实际身体高度是 0.32，但 mc_ctrl 用自己的 FK（含关节偏移量 hip_offset/knee_offset）算出来是 0.375。两边对"同一组关节角"的高度理解不同。
+
+---
+
+**下一步我建议**：抓取 UE 当前实际发送的关节角和机器人真实高度，对比 mc_ctrl 的 FK 计算，确认关节偏移量的具体差异，然后在 UE 发送 RobotState 时补偿偏移量，让 mc_ctrl 算出正确的 0.32 高度，从而正常转换到 RLMIX。
+
+需要我现在就开始排查这个关节偏移量问题吗？
+
+好的，先暂停排查。当前状态给你同步一下：
+
+## 已确认的核心结论
+
+**按 W 没反应 = mc_ctrl 卡死在 STANDUP，根因是关节偏移量问题**：
+
+```
+STANDUP→RLMIX 转换条件：FK计算身高 与 目标 body_height 误差 < ±10%
+mc_ctrl 算出身高 = 0.375 m （用它自己的FK，含 hip_offset/knee_offset）
+目标 body_height = 0.32 m
+偏差 = 0.375/0.32 = 1.17 → 17% > 10% ❌ 拒绝转换
+```
+
+UE 发送关节角时**直接用 MuJoCo 原始值，没有补偿偏移量**（已确认 [UdpSenderComponent.cpp](file:///home/qiyuan/UnrealEngine/CarlaUE5/Unreal/CarlaUnreal/Plugins/MuJoCoUE/Source/MuJoCoUE/Private/UdpSenderComponent.cpp#L117-L123) 第117-123行），导致两边对"同一组关节角"的身高理解不一致。
+
+## ⚠️ 一个需要注意的遗留状态
+
+刚才抓取数据时 mc_ctrl 异常退出又重启，现在有**两个 mc_ctrl 进程**在跑（PID 3993677 和 4008449），都绑着 25001 端口。下次继续测试前建议先清理掉多余的那个，避免 UDP 包被分流导致控制不稳定。
+
+## 下一步（等你继续时）
+
+1. 清理多余 mc_ctrl 进程
+2. 抓取 UE 站立时的真实关节角（上次抓取没收到数据，UE 进程状态需要确认）
+3. 对比 mc_ctrl 的 FK 偏移参数，在 UE 发送 RobotState 时补偿偏移量
+
+你先忙，需要继续时叫我。
+
 
 
 测试流程
@@ -643,4 +732,39 @@ taskset -c 7 ./mc_ctrl r
 
 
 
+
+拆分启动
+
+一、sim_launcher
+
+```
+./bin/sim_launcher
+```
+
+二、ue
+
+```
+cd /home/qiyuan/Softwares/Matrix/src/UeSim/Linux
+
+export LD_LIBRARY_PATH="$(pwd)/zsibot_mujoco_ue/Binaries/Linux:$(pwd)/Engine/Binaries/Linux:$(pwd)/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux:${LD_LIBRARY_PATH:-}"
+
+./zsibot_mujoco_ue.sh -game /Game/Maps/YardWorld -ExecCmds="t.MaxFPS 30"
+```
+
+三、mc_ctrl
+
+```
+cd /home/qiyuan/Softwares/Matrix/src/robot_mc
+
+export ROBOT_TYPE=XG
+export SDK_CLIENT_IP=127.0.0.1
+export LD_LIBRARY_PATH="$(pwd)/build/export/mc/bin:${LD_LIBRARY_PATH:-}"
+
+cd build/export/mc/bin
+
+
+taskset -c 7 ./mc_ctrl r
+
+taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_matrix.log
+```
 
