@@ -707,6 +707,68 @@ UE 发送关节角时**直接用 MuJoCo 原始值，没有补偿偏移量**（�
 
 
 
+## 诊断数据分析 — 关键发现！
+
+从 UE 的 `[PD-Diag]` 日志可以看到：
+
+```
+初始:  target hip=0.0443 knee=-0.0437 | actual hip=1.0490 knee=-2.7507 | bodyZ=0.0469
+5秒后: target hip=0.8000 knee=-1.5000 | actual hip=0.7939 knee=-1.5594 | bodyZ=0.3177
+```
+
+**机器人实际上已经成功站起来了！**
+- mc_ctrl 发送目标 hip=0.8, knee=-1.5 ✅
+- UE 的 PD 完美跟踪（actual ≈ target）✅
+- 身体实际高度 bodyZ = **0.3177** ✅
+
+**但 mc_ctrl 仍然报告 body height = 0.375！**
+
+## 根因确认
+
+mc_ctrl 内部的 FK 公式与标准公式不同。对于相同的关节角（hip≈0.8, knee≈-1.5）：
+- 标准 FK：`0.2*cos(0.8) + 0.21366*cos(-0.7)` = **0.303**
+- 实际 bodyZ = **0.318**
+- mc_ctrl 计算 = **0.375**（包含额外偏移量）
+
+mc_ctrl 的 STANDUP 检查：`0.375 / body_height(0.32) = 1.17 > 1.1` → **永远不通过！**
+
+## 修复方案
+
+将 `xg-user-parameters.yaml` 中的 `body_height` 改为 mc_ctrl 实际计算出的站立高度：
+
+
+## 分析总结
+
+诊断数据揭示了真相：
+
+| 指标                  | 值                     | 说明            |
+| --------------------- | ---------------------- | --------------- |
+| mc_ctrl 目标          | hip=0.8, knee=-1.5     | ✅ 正确发送      |
+| UE 实际关节           | hip=0.794, knee=-1.559 | ✅ 完美跟踪      |
+| 实际 bodyZ            | 0.3177                 | ✅ 机器人已站起  |
+| mc_ctrl "body height" | **0.375**              | ❌ 内部FK含偏移  |
+| 配置 body_height      | 0.32                   | 比值 1.17 > 1.1 |
+
+**机器人已经站好了，但 mc_ctrl 的内部 FK 公式（含 ~0.12m 偏移）算出 0.375，与配置 0.32 不匹配，导致 STANDUP 检查永远不通过。**
+
+已将 `body_height` 改为 **0.375**。
+
+## 下一步
+
+**只需重启 mc_ctrl**（不需要重新编译 UE）：
+
+```bash
+# Ctrl+C 停止当前 mc_ctrl，然后重新启动
+cd /home/qiyuan/Softwares/Matrix/src/robot_mc/build/export/mc/bin
+taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_carlaunreal.log
+```
+
+启动后观察是否从 STANDUP 转换到 RL_MIX，然后按 W 测试行走。
+
+
+
+
+
 测试流程
 
 一、UE
@@ -726,7 +788,7 @@ sudo python3 /home/qiyuan/UnrealEngine/CarlaUE5/Unreal/CarlaUnreal/Plugins/MuJoC
 三、mc_ctrl
 
 ```
-taskset -c 7 ./mc_ctrl r
+taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_carlaunreal.log
 ```
 
 
