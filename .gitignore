@@ -14,18 +14,11 @@ releases/*.bak
 releases/chunks/
 !releases/.gitkeep
 
-# UeSim content (filled by downloading releases)
-# Keep directory structure but ignore content
-src/UeSim/Linux/zsibot_mujoco_ue/Content/Paks/*
-src/UeSim/Linux/zsibot_mujoco_ue/Content/model/*
-src/UeSim/Linux/zsibot_mujoco_ue/Binaries/*
-!src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux/
-!src/UeSim/Linux/zsibot_mujoco_ue/Binaries/Linux/zsibot_mujoco_ue-Linux-Shipping
-!src/UeSim/Linux/zsibot_mujoco_ue/.gitkeep
+# UeSim Linux runtime (large binaries, download from releases)
+src/UeSim/Linux/
 
-# MuJoCo robot model mirror generated from UeSim Content/model during install
-src/robot_mujoco/zsibot_robots/*
-!src/robot_mujoco/zsibot_robots/.gitkeep
+# MuJoCo robot models (generated/downloaded at install)
+src/robot_mujoco/
 
 # Build artifacts
 *.log
