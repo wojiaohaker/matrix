@@ -824,9 +824,6 @@ export LD_LIBRARY_PATH="$(pwd)/build/export/mc/bin:${LD_LIBRARY_PATH:-}"
 
 cd build/export/mc/bin
 
-
-taskset -c 7 ./mc_ctrl r
-
 taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_matrix.log
 ```
 
