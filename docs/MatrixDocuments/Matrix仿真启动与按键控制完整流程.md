@@ -788,6 +788,10 @@ sudo python3 /home/qiyuan/UnrealEngine/CarlaUE5/Unreal/CarlaUnreal/Plugins/MuJoC
 三、mc_ctrl
 
 ```
+export SDK_CLIENT_IP=127.0.0.1   # 必须！否则 bind 失败走备用通道
+export ROBOT_TYPE=XG
+export LD_LIBRARY_PATH="$(pwd)/build/export/mc/bin:${LD_LIBRARY_PATH:-}"
+
 taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_carlaunreal.log
 ```
 
