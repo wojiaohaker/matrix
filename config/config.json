@@ -69,7 +69,7 @@
         "frequency": 10
       }
     },
-    "mujoco_running": false,
+    "mujoco_running": true,
     "state_port": 25001,
     "cmd_port": 25002,
     "EgoView": true

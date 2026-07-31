@@ -17,6 +17,9 @@ releases/chunks/
 # UeSim Linux runtime (large binaries, download from releases)
 src/UeSim/Linux/
 
+# Dynamic maps (large .bin files, download from releases)
+dynamicmaps/*.bin
+
 # MuJoCo robot models (generated/downloaded at install)
 src/robot_mujoco/
 
@@ -25,6 +28,7 @@ src/robot_mujoco/
 *.tmp
 bin/*.log
 bin/log.txt
+bin/sim_launcher.bin
 
 # Build directories
 **/build/

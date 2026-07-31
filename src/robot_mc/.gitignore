@@ -19,5 +19,8 @@ cmake-build-release
 !build/export/mc/
 !build/export/mc/bin/
 !build/export/mc/bin/*
+# Exclude large binaries (>50MB, restored from releases/assets tarball)
+build/export/mc/bin/mc_ctrl
+build/export/mc/bin/libbiomimetics.so
 !build/export/onnx_model_crypto/
 !build/export/onnx_model_crypto/**/*
