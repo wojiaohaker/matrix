@@ -1,4 +1,4 @@
-CarlaUnreal启动
+CarlaUnreal + mujoco
 
 一、UE
 
@@ -33,7 +33,7 @@ taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_carlaunreal.log
 
 
 
-Matrix拆分启动
+Matrix
 
 一、sim_launcher
 
@@ -48,6 +48,7 @@ cd /home/qiyuan/Softwares/Matrix
 ```
 cd /home/qiyuan/Softwares/Matrix/src/UeSim/Linux
 
+# 必须！
 export LD_LIBRARY_PATH="$(pwd)/zsibot_mujoco_ue/Binaries/Linux:$(pwd)/Engine/Binaries/Linux:$(pwd)/Engine/Plugins/Runtime/OpenCV/Binaries/ThirdParty/Linux:${LD_LIBRARY_PATH:-}"
 
 ./zsibot_mujoco_ue.sh -game /Game/Maps/YardWorld -ExecCmds="t.MaxFPS 30"
@@ -56,13 +57,11 @@ export LD_LIBRARY_PATH="$(pwd)/zsibot_mujoco_ue/Binaries/Linux:$(pwd)/Engine/Bin
 三、mc_ctrl
 
 ```
-cd /home/qiyuan/Softwares/Matrix/src/robot_mc
+cd /home/qiyuan/Softwares/Matrix/src/robot_mc/build/export/mc/bin
 
 export ROBOT_TYPE=XG
 export SDK_CLIENT_IP=127.0.0.1
 export LD_LIBRARY_PATH="$(pwd)/build/export/mc/bin:${LD_LIBRARY_PATH:-}"
-
-cd build/export/mc/bin
 
 taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_matrix.log
 ```

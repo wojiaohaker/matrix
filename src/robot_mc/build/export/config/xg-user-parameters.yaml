@@ -81,7 +81,7 @@ enable_joint_pos_protect: 1
 enable_joint_pos_limit: 1
 feet_z_offset: 0.03
 imu_type: 0
-motor_platform_type: 8
+motor_platform_type: 5
 enable_foldleg: 1
 # Gait Scheduler parameters
 gait_type             : 4
