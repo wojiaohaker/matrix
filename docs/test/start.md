@@ -182,10 +182,15 @@ sudo python3 /home/qiyuan/UnrealEngine/CarlaUE5/Unreal/CarlaUnreal/Plugins/MuJoC
 ```
 cd /home/qiyuan/Softwares/Matrix/src/robot_mc/build/export/mc/bin
 
+#重要，这样 mc_ctrl 会绑定到 127.0.0.1:43997（本地回环），SDK 初始化就能成功，然后：
+#接收 mujoco_sim 的 RobotState（通过 eCAL 或 UDP）
+#接收导航栈的速度指令（UDP 43988）
+#从 JOINT_FREE → STAND → RL_Walk
+
 export ROBOT_TYPE=XG
 export SDK_CLIENT_IP=127.0.0.1
 export LD_LIBRARY_PATH="$(pwd)/build/export/mc/bin:${LD_LIBRARY_PATH:-}"
 
-taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_matrix.log
+taskset -c 7 ./mc_ctrl r 2>&1 | tee /tmp/mc_ctrl_carlaunreal.log
 ```
 
