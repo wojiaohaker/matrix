@@ -1245,6 +1245,105 @@ robot_mc 中无法获取源码的部分：
   └── 适合: 无 GPU 或快速验证
 ```
 
+
+
+Matrix RL 训练环境分析
+
+**不是 stable-baselines3**。robot_mc 的训练环境是 **zsibot 自研框架**，但物理引擎确实是 MuJoCo。
+
+## robot_mc 实际训练环境
+
+| 组件         | 实际情况                                                     |
+| ------------ | ------------------------------------------------------------ |
+| **物理引擎** | MuJoCo（`zsibot_robots/xgw/xgw.xml` 等模型文件证实）         |
+| **RL 框架**  | **zsibot_sim**（自研，非 stable-baselines3 / RSL_RL / legged_gym） |
+| **模型输出** | 加密 ONNX（`onnx_model_crypto/` 目录，`libfilecrypto_shared.so` 解密） |
+| **网络架构** | **双模型**：policy 网络 + estimator 网络（学习型里程计）     |
+| **推理加速** | 支持 TensorRT                                                |
+| **地形训练** | 多种 terrain XML（flat, sloped, stair, crowd, zombie 等）    |
+
+## 关键证据
+
+从 [rl_onnx_config.yaml](file:///home/qiyuan/Softwares/Matrix/src/robot_mc/build/export/config/rl_onnx_config.yaml) 可以看到，系统为**每种技能**都训练了独立的 policy + odom 模型对：
+
+```
+policy_mix_walk_path     → 行走策略
+policy_mix_flipover_path → 翻身策略  
+policy_mix_backflip_path → 后空翻策略
+policy_balancestand_path → 平衡站立策略
+policy_mix_climb_path    → 攀爬策略
+policy_mix_crawl_path    → 爬行策略
+...
+```
+
+这说明训练框架支持**多任务/多技能**的独立策略训练，每个技能一对 ONNX 模型（policy + odom），运行时由 FSM 状态机切换。
+
+## 与你方案的对比
+
+|          | robot_mc（自研）       | 方案 B（SB3）    |
+| -------- | ---------------------- | ---------------- |
+| 物理引擎 | MuJoCo ✅               | MuJoCo ✅         |
+| RL 算法  | 自研 PPO（大概率）     | SB3 PPO          |
+| 并行化   | 自研大规模并行         | 多进程（慢）     |
+| 模型管理 | 加密 ONNX + 多技能切换 | 单模型           |
+| 可复现性 | ❌ 闭源不可复现         | ✅ 完全开源可复现 |
+
+**结论**：物理引擎选 MuJoCo 是对的，但 RL 框架不是 SB3——是 zsibot 团队自研的内部工具，不对外开源。如果你要自己训练，用 MuJoCo + SB3/RSL_RL 是可以的，只是训练效率和奖励设计需要自己摸索。
+
+
+
+根据逆向分析，zsibot_sim 主要做了以下工作：
+
+## zsibot_sim 框架核心工作
+
+### 1. 训练侧（Python，不开放）
+
+| 模块           | 内容                                                         |
+| -------------- | ------------------------------------------------------------ |
+| **物理环境**   | 基于 MuJoCo XML 模型构建仿真环境（多种 terrain：flat/stair/sloped/crowd 等） |
+| **RL 算法**    | 自研 PPO 实现（非 RSL_RL/SB3），基于 PyTorch 训练            |
+| **观测设计**   | 自定义 `policy_obs` 张量（包含 IMU、关节状态、历史动作、速度命令等） |
+| **双模型架构** | 同时训练 **policy 网络**（输出动作）+ **estimator 网络**（学习型里程计，从历史观测估计速度） |
+| **奖励设计**   | 自定义奖励函数（速度跟踪、姿态稳定、能量效率等，具体不可见） |
+| **多技能训练** | 为 20+ 种运动模式分别训练独立策略（行走、后空翻、跳跃、匍匐、太空步...） |
+| **模型加密**   | 训练后 ONNX 模型用 `libfilecrypto_shared.so` 加密保护        |
+
+### 2. 推理侧（C++，部署在 robot_mc 中）
+
+从 `libonnx_model.so` 逆向得到的导出函数：
+
+```
+inference::ModelInference
+├── loadPolicy(path)              // 加载单个策略模型
+├── loadPolicy(policy_path, odom_path)  // 加载 policy + odom 双模型
+├── inferLoop()                   // 纯策略推理（无里程计）
+├── inferLoopWithEstimator()      // policy + estimator 联合推理
+├── updateObs(obs, reset)         // 更新观测输入
+└── reset()                       // 重置隐状态（LSTM）
+```
+
+| 模块                  | 功能                                                         |
+| --------------------- | ------------------------------------------------------------ |
+| **ONNX Runtime 推理** | 加载加密 ONNX 模型，解密后运行推理                           |
+| **观测预处理**        | 组装 `policy_obs` 向量，应用 `obs_scales_lin_vel` 等缩放参数 |
+| **双模型联合推理**    | policy 输出动作 + estimator 输出速度估计，形成闭环           |
+| **TensorRT 加速**     | 支持 TensorRT 后端加速推理（配置项 `trt`）                   |
+| **LSTM 隐状态管理**   | 支持带 LSTM 的循环策略，`reset()` 清除隐状态                 |
+
+### 3. 与传统开源框架的关键区别
+
+|                | zsibot_sim                      | RSL_RL           | SB3           |
+| -------------- | ------------------------------- | ---------------- | ------------- |
+| **里程计**     | 独立 estimator 网络学习         | 直接用仿真真值   | 无            |
+| **推理封装**   | C++ `inference::ModelInference` | 无（需自己部署） | 无            |
+| **模型保护**   | 加密 ONNX                       | 无               | 无            |
+| **多技能管理** | 20+ 策略由 FSM 切换             | 单策略           | 单策略        |
+| **观测命名**   | `policy_obs`（自定义）          | `obs`（标准）    | `obs`（标准） |
+
+**一句话总结**：zsibot_sim 的核心创新是**双模型架构**（policy + learned estimator）和**多技能策略库**（20+ 独立 ONNX 模型），配合自研加密和 C++ 推理引擎，形成了一套完整的从训练到部署的闭环。训练部分完全闭源，部署部分只暴露 3 个核心函数。
+
+
+
 ### 11.5 阶段 B3：观测空间和动作空间设计
 
 **观测空间（参考业界标准 + robot_mc 推断）:**
